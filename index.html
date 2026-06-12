@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Code Quest Adventure</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&family=IM+Fell+English:ital@0;1&family=Share+Tech+Mono&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0604;font-family:'IM Fell English',serif}
+#root{width:100vw;height:100vh;position:relative;overflow:hidden}
+.dungeon-bg{position:absolute;inset:0;background:radial-gradient(ellipse 120% 80% at 50% 20%,#1e0a3c 0%,#0d0520 45%,#050210 100%);overflow:hidden;z-index:0}
+.dungeon-bg::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,.01) 3px,rgba(255,255,255,.01) 4px),repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(255,255,255,.01) 3px,rgba(255,255,255,.01) 4px)}
+.dungeon-bg::after{content:'';position:absolute;bottom:0;left:0;right:0;height:35%;background:linear-gradient(180deg,transparent,#1a0e06 60%,#110904 100%);border-top:2px solid #3a1f06}
+.curtain-l,.curtain-r{position:absolute;top:0;bottom:0;width:10%;z-index:1;background:repeating-linear-gradient(180deg,#6b1a1a 0,#8b2222 8px,#5a1212 16px,#7a1c1c 24px)}
+.curtain-l{left:0;clip-path:polygon(0 0,100% 0,72% 100%,0 100%)}
+.curtain-l::after{content:'';position:absolute;right:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,#f5c842,#c8942a,#f5c842,#c8942a)}
+.curtain-r{right:0;clip-path:polygon(0 0,100% 0,100% 100%,28% 100%)}
+.curtain-r::after{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,#f5c842,#c8942a,#f5c842,#c8942a)}
+.torch{position:absolute;top:11%;z-index:2;font-size:clamp(18px,3.5vw,30px);filter:drop-shadow(0 0 14px #ff8c00) drop-shadow(0 0 28px #ff4400);animation:tfx .15s infinite alternate}
+.torch-l{left:11%}.torch-r{right:11%}
+@keyframes tfx{0%{filter:drop-shadow(0 0 12px #ff8c00) drop-shadow(0 0 22px #ff4400)}100%{filter:drop-shadow(0 0 20px #ffb300) drop-shadow(0 0 40px #ff6600)}}
+.moon{position:absolute;top:3%;left:50%;transform:translateX(-50%);width:clamp(50px,8vw,84px);height:clamp(50px,8vw,84px);border-radius:50%;background:radial-gradient(circle,#fffbe8 0%,#ffe066 40%,#ffb700 70%,transparent 100%);box-shadow:0 0 40px 18px rgba(255,200,0,.22),0 0 80px 40px rgba(255,150,0,.1);z-index:1;animation:moonP 4s ease-in-out infinite}
+@keyframes moonP{0%,100%{box-shadow:0 0 40px 18px rgba(255,200,0,.22)}50%{box-shadow:0 0 60px 28px rgba(255,220,0,.32)}}
+.screen{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .3s}
+.screen.show{opacity:1;pointer-events:all}
+.scroll-panel{background:linear-gradient(160deg,#2a1a08 0%,#1a1008 50%,#221508 100%);border:3px solid #8b5e1a;border-radius:4px;position:relative;box-shadow:0 0 0 1px #2a1800,0 0 0 5px #5a3a0e,0 0 0 6px #8b5e1a,0 0 40px rgba(0,0,0,.9),inset 0 0 50px rgba(0,0,0,.5)}
+.scroll-panel::before{content:'';position:absolute;inset:5px;border:1px solid rgba(255,200,100,.07);border-radius:2px;pointer-events:none}
+.panel-cap{font-family:'Cinzel Decorative',serif;color:#f5c842;text-shadow:0 0 14px #f5c842;font-size:clamp(10px,2vw,14px);letter-spacing:.25em;text-align:center;padding:8px 0 4px}
+.btn{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(10px,2vw,13px);letter-spacing:.1em;padding:clamp(9px,2vw,13px) clamp(16px,3vw,32px);border-radius:3px;cursor:pointer;transition:.18s;box-shadow:0 4px 12px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.1)}
+.btn-gold{background:linear-gradient(160deg,#6b3a10,#4a2808,#5a3210);border:2px solid #8b5e1a;color:#f5c842;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+.btn-gold:hover{background:linear-gradient(160deg,#8b4e1a,#6b3810,#7a4214);border-color:#f5c842;transform:translateY(-1px)}
+.btn-dim{background:linear-gradient(160deg,#1e1208,#120c04);border:2px solid #4a3010;color:#a07840}
+.btn-dim:hover{border-color:#8b5e1a;color:#f5c842}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
+#s-title .inner{text-align:center;padding:clamp(14px,4vw,30px) clamp(18px,6vw,50px);max-width:660px;width:94%}
+.game-logo{font-family:'Cinzel Decorative',serif;font-weight:700;font-size:clamp(28px,8vw,68px);background:linear-gradient(135deg,#f5c842,#ffe066,#c8942a,#f5c842);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 20px rgba(245,200,66,.5));animation:logoG 3s ease-in-out infinite;line-height:1;margin-bottom:6px}
+@keyframes logoG{0%,100%{filter:drop-shadow(0 0 14px rgba(245,200,66,.4))}50%{filter:drop-shadow(0 0 36px rgba(245,200,66,.7))}}
+.game-tagline{font-family:'Cinzel',serif;font-size:clamp(8px,1.8vw,12px);color:#a07840;letter-spacing:.4em;margin-bottom:22px}
+.lang-roster{display:flex;gap:clamp(6px,2vw,14px);justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.lr-card{background:linear-gradient(160deg,#1e1208,#120c04);border:2px solid #4a3010;border-radius:4px;padding:10px 12px;text-align:center;min-width:70px;transition:.2s;cursor:default}
+.lr-card:hover{border-color:#8b5e1a;transform:translateY(-3px)}
+.lr-icon{font-size:clamp(18px,3.5vw,26px);display:block;margin-bottom:4px}
+.lr-name{font-family:'Cinzel',serif;font-size:7px;color:#a07840;letter-spacing:.06em;display:block}
+#s-worldmap .inner{max-width:680px;width:96%;padding:clamp(12px,3vw,22px)}
+.world-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:16px}
+@media(min-width:480px){.world-grid{grid-template-columns:repeat(3,1fr)}}
+.world-card{background:linear-gradient(160deg,#1e1208,#120c04);border:2px solid #4a3010;border-radius:6px;padding:13px 11px;text-align:center;cursor:pointer;transition:.22s;position:relative;overflow:hidden}
+.world-card::before{content:'';position:absolute;inset:0;opacity:0;transition:.2s;background:radial-gradient(circle at 50% 0%,rgba(245,200,66,.1),transparent 65%)}
+.world-card:hover{border-color:#8b5e1a;transform:translateY(-4px);box-shadow:0 8px 22px rgba(0,0,0,.7)}
+.world-card:hover::before{opacity:1}
+.wc-icon{font-size:clamp(24px,5vw,36px);display:block;margin-bottom:5px}
+.wc-name{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(10px,2.2vw,13px);letter-spacing:.06em;display:block;margin-bottom:3px}
+.wc-sub{font-family:'IM Fell English',serif;font-style:italic;font-size:8px;color:#6b4a10;line-height:1.4;display:block;margin-bottom:5px}
+.wc-stars{display:flex;gap:3px;justify-content:center;margin-bottom:3px}
+.star{font-size:11px;color:#3a2008}.star.lit{color:#f5c842;text-shadow:0 0 6px #f5c842}
+.wc-lvls{font-family:'Cinzel',serif;font-size:8px;color:#5a3808;letter-spacing:.1em}
+#s-levelmap .inner{max-width:620px;width:96%;padding:clamp(10px,3vw,20px)}
+.lvl-path{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto;padding:2px 0}
+.lvl-node{display:flex;align-items:center;gap:11px;background:linear-gradient(160deg,#1e1208,#120c04);border:2px solid #4a3010;border-radius:5px;padding:10px 13px;cursor:pointer;transition:.2s}
+.lvl-node:hover:not(.locked){border-color:#8b5e1a;transform:translateX(4px)}
+.lvl-node.locked{opacity:.4;cursor:not-allowed}
+.lvl-node.completed{border-color:#15803d}
+.lvl-node.current{border-color:#f5c842;box-shadow:0 0 12px rgba(245,200,66,.18)}
+.lvl-num{font-family:'Cinzel Decorative',serif;font-size:clamp(15px,3.5vw,20px);font-weight:700;min-width:28px;text-align:center}
+.lvl-info{flex:1}
+.lvl-title{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(10px,2.2vw,13px);color:#e8d5a0;letter-spacing:.05em}
+.lvl-enemy{font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(9px,1.8vw,11px);color:#7a5830}
+.lvl-stars{display:flex;gap:2px;margin-top:2px}
+#battle-layout{position:absolute;inset:0;z-index:10;display:none;flex-direction:column}
+#battle-layout.show{display:flex}
+#battle-top{flex:none;padding:5px 14px;background:linear-gradient(180deg,rgba(8,4,2,.97),rgba(5,3,1,.9));border-bottom:2px solid #4a2808;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bt-brand{font-family:'Cinzel Decorative',serif;font-weight:700;font-size:clamp(10px,2.2vw,14px);color:#f5c842}
+.bt-info{font-family:'Cinzel',serif;font-size:clamp(8px,1.8vw,11px);color:#a07840;letter-spacing:.08em}
+.bt-stats{display:flex;gap:12px;align-items:center}
+.bts{text-align:center}
+.bts .l{font-family:'Cinzel',serif;font-size:7px;color:#4a2808;letter-spacing:.1em;display:block}
+.bts .v{font-family:'Cinzel Decorative',serif;font-size:clamp(12px,2.5vw,15px);font-weight:700;display:block}
+#arena-strip{flex:none;height:clamp(95px,20vh,160px);position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:0 clamp(10px,5vw,55px) 6px;overflow:hidden}
+.hero-side,.enemy-side{display:flex;flex-direction:column;align-items:center;gap:4px;z-index:2}
+.char-frame{width:clamp(55px,11vw,95px);height:clamp(65px,13vw,110px);position:relative;filter:drop-shadow(0 5px 12px rgba(0,0,0,.9));transition:transform .2s,filter .2s}
+.char-frame svg{width:100%;height:100%}
+.char-label{font-family:'Cinzel',serif;font-size:clamp(7px,1.4vw,9px);color:#f5c842;text-shadow:0 0 6px #f5c842;letter-spacing:.06em;text-align:center}
+.hp-hearts{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:85px}
+.hh{font-size:clamp(8px,1.8vw,13px);transition:.3s}
+.hh.full{color:#ef4444;text-shadow:0 0 6px #ef4444}.hh.empty{color:#2a1008}
+.enemy-hp-wrap{text-align:right}
+.ehp-bar{width:clamp(85px,17vw,155px);height:11px;background:rgba(10,5,2,.9);border:2px solid #6b2a0a;border-radius:2px;overflow:hidden;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,.6)}
+.ehp-fill{height:100%;transition:width .5s ease;position:relative;overflow:hidden}
+.ehp-fill::after{content:'';position:absolute;top:0;left:0;right:0;height:45%;background:linear-gradient(180deg,rgba(255,255,255,.2),transparent)}
+.ehp-text{font-family:'Cinzel',serif;font-size:8px;color:#ffaa44;text-align:right;margin-top:2px}
+.vs-glyph{font-family:'Cinzel Decorative',serif;font-size:clamp(15px,4vw,26px);color:#f5c842;text-shadow:0 0 18px #f5c842;animation:vsP 2s infinite;z-index:2;align-self:center}
+@keyframes vsP{0%,100%{transform:scale(1)}50%{transform:scale(1.1);text-shadow:0 0 30px #f5c842}}
+#problem-pane{flex:1;min-height:0;display:flex;flex-direction:column;background:linear-gradient(180deg,#110904,#0d0702);border-top:3px solid #4a2808;overflow:hidden}
+#problem-header{flex:none;padding:5px 14px;background:linear-gradient(180deg,#1a0e06,#130a04);border-bottom:1px solid #3a1e06;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ph-badge{font-family:'Cinzel',serif;font-size:8px;padding:2px 9px;border-radius:2px;border:1px solid currentColor;letter-spacing:.12em}
+.ph-lang{font-family:'Cinzel',serif;font-size:8px;padding:2px 8px;border-radius:2px;border:1px solid #5a3a0e;color:#a07840}
+.ph-scroll{font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(8px,1.8vw,11px);color:#6b4a10}
+.ph-xp{font-family:'Cinzel',serif;font-size:8px;color:#5a3808;letter-spacing:.1em}
+#ph-timer{font-family:'Cinzel Decorative',serif;font-weight:700;font-size:clamp(11px,2.5vw,15px);color:#f5c842;min-width:34px;text-align:right}
+#problem-body{flex:1;min-height:0;display:flex;overflow:hidden}
+#task-pane{flex:1;min-width:0;padding:9px 13px;overflow-y:auto;border-right:1px solid #2a1406;background:linear-gradient(180deg,#130a04,#0f0802)}
+.task-name{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(11px,2.4vw,14px);color:#e8d5a0;margin-bottom:6px;letter-spacing:.04em}
+.task-desc{font-family:'IM Fell English',serif;font-size:clamp(10px,2vw,13px);color:#c8a870;line-height:1.7;margin-bottom:9px}
+.task-example{background:rgba(0,0,0,.55);border:1px solid #3a2008;border-radius:3px;padding:7px 11px;margin-bottom:7px;font-family:'Share Tech Mono',monospace;font-size:clamp(9px,1.8vw,11px);color:#7dd3fc;white-space:pre;overflow-x:auto;line-height:1.5}
+.task-label{font-family:'Cinzel',serif;font-size:8px;color:#5a3808;letter-spacing:.15em;margin-bottom:4px;text-transform:uppercase}
+.task-hint{background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.2);border-radius:3px;padding:7px 11px;margin-top:7px;font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(9px,1.8vw,11px);color:#c8942a;line-height:1.5}
+.task-hint.hidden{display:none}
+.tc-item{font-family:'Share Tech Mono',monospace;font-size:clamp(8px,1.5vw,10px);color:#7a5830;padding:2px 0;display:flex;gap:5px}
+.tc-item::before{content:'•';color:#5a3808;flex-shrink:0}
+#editor-pane{flex:1;min-width:0;display:flex;flex-direction:column;background:#0a0602}
+#editor-toolbar{flex:none;padding:4px 11px;background:#100804;border-bottom:1px solid #2a1406;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.et-lang{font-family:'Cinzel',serif;font-size:9px;color:#a07840;letter-spacing:.1em}
+.et-btn{font-family:'Cinzel',serif;font-size:8px;padding:4px 10px;border-radius:2px;cursor:pointer;border:1px solid #4a3010;background:rgba(0,0,0,.4);color:#a07840;transition:.15s;letter-spacing:.08em}
+.et-btn:hover{border-color:#8b5e1a;color:#f5c842}
+.et-btn.run-btn{background:linear-gradient(160deg,#14420e,#0a2808);border-color:#15803d;color:#4ade80}
+.et-btn.run-btn:hover{background:linear-gradient(160deg,#1a5a14,#0e3a0a);border-color:#4ade80;box-shadow:0 0 10px rgba(74,222,128,.2)}
+#code-editor{flex:1;min-height:0;width:100%;resize:none;background:#080502;color:#e8d5a0;font-family:'Share Tech Mono',monospace;font-size:clamp(11px,1.9vw,14px);line-height:1.65;padding:9px 13px;border:none;outline:none;caret-color:#f5c842;overflow-y:auto;tab-size:2}
+#output-area{flex:none;height:clamp(58px,14vh,115px);background:#050402;border-top:1px solid #2a1406;display:flex;flex-direction:column;overflow:hidden}
+#output-header{flex:none;padding:3px 11px;background:#0a0602;border-bottom:1px solid #1e0c04;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.oh-title{font-family:'Cinzel',serif;font-size:8px;color:#4a2808;letter-spacing:.14em}
+#output-status{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em}
+#output-scroll{flex:1;overflow-y:auto;padding:5px 11px;font-family:'Share Tech Mono',monospace;font-size:clamp(9px,1.7vw,11px);line-height:1.5;color:#7a5830;white-space:pre-wrap;word-break:break-word}
+.test-row{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;font-size:clamp(9px,1.6vw,11px)}
+.test-icon{flex-shrink:0;font-size:11px}
+.test-text{flex:1;color:#a07840}
+.test-text.pass{color:#4ade80}.test-text.fail{color:#f87171}.test-text.err{color:#fb923c}
+#flash{position:fixed;inset:0;z-index:80;pointer-events:none;opacity:0}
+@keyframes flashFx{0%,100%{opacity:0}30%{opacity:1}}
+#combo-banner{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);z-index:75;pointer-events:none;display:none;text-align:center}
+.combo-txt{font-family:'Cinzel Decorative',serif;font-weight:700;font-size:clamp(22px,6vw,46px);color:#f5c842;text-shadow:0 0 28px #f5c842,0 0 56px #ff9900,2px 2px 0 #5a3808;animation:cB 1.3s ease-out forwards;letter-spacing:.06em}
+@keyframes cB{0%{opacity:0;transform:scale(.2) rotate(-12deg)}18%{opacity:1;transform:scale(1.3) rotate(2deg)}80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.8) translateY(-55px)}}
+.dmg-float{position:fixed;pointer-events:none;z-index:72;font-family:'Cinzel Decorative',serif;font-weight:700;animation:dF 1.4s ease-out forwards;white-space:nowrap}
+@keyframes dF{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-170px) scale(1.4)}}
+#outcome-overlay{position:fixed;inset:0;z-index:85;pointer-events:none;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);backdrop-filter:blur(2px)}
+#outcome-overlay.show{display:flex;pointer-events:all}
+.outcome-box{text-align:center;padding:clamp(18px,4vw,34px) clamp(22px,6vw,54px);animation:oB .4s ease-out}
+@keyframes oB{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.oc-icon{font-size:clamp(46px,12vw,82px);display:block;margin-bottom:8px}
+.oc-title{font-family:'Cinzel Decorative',serif;font-weight:700;font-size:clamp(20px,6vw,40px);margin-bottom:5px}
+.oc-sub{font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(11px,2.5vw,15px);color:#c8942a;margin-bottom:16px;letter-spacing:.1em}
+.oc-xp{font-family:'Cinzel',serif;font-size:clamp(13px,3vw,18px);color:#f5c842;text-shadow:0 0 12px #f5c842;margin-bottom:16px}
+.oc-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#s-results .inner{max-width:510px;width:94%;padding:clamp(14px,3vw,24px);max-height:90vh;overflow-y:auto}
+.res-title{font-family:'Cinzel Decorative',serif;font-weight:700;font-size:clamp(20px,5vw,34px);text-align:center;margin-bottom:4px}
+.res-sub{font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(9px,2vw,12px);color:#7a5830;text-align:center;letter-spacing:.2em;margin-bottom:10px}
+.grade-seal{width:82px;height:82px;border-radius:50%;margin:0 auto 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:3px solid currentColor;background:radial-gradient(circle,#2a1808,#1a1005);box-shadow:0 0 26px currentColor}
+.grade-l{font-family:'Cinzel Decorative',serif;font-size:34px;font-weight:700;line-height:1}
+.grade-lb{font-family:'Cinzel',serif;font-size:7px;color:#5a3808;letter-spacing:.14em}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
+.sg-box{background:rgba(0,0,0,.4);border:1px solid #3a2008;border-radius:3px;padding:11px;text-align:center}
+.sg-l{font-family:'Cinzel',serif;font-size:8px;color:#4a2808;letter-spacing:.1em;margin-bottom:4px}
+.sg-v{font-family:'Cinzel Decorative',serif;font-size:clamp(17px,4vw,22px);font-weight:700}
+.feedback{background:rgba(0,0,0,.3);border:1px solid #3a2008;border-radius:3px;padding:11px 13px;font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(10px,2vw,12px);color:#9a7840;line-height:1.7;text-align:center;margin-bottom:15px}
+#hint-btn{font-family:'Cinzel',serif;font-size:8px;padding:3px 10px;border-radius:2px;border:1px solid #4a3010;background:rgba(0,0,0,.4);color:#7a5830;cursor:pointer;transition:.15s}
+#hint-btn:hover{border-color:#8b5e1a;color:#c8942a}
+#lvlup{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%);z-index:78;pointer-events:none;display:none;text-align:center;font-family:'Cinzel Decorative',serif;font-size:clamp(18px,5vw,34px);color:#ffe066;text-shadow:0 0 28px #f5c842,0 0 56px #ff9900;animation:luA 2.5s ease-out forwards}
+@keyframes luA{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1)}90%{opacity:1}100%{opacity:0;transform:translate(-50%,-110px)}}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:#0a0602}::-webkit-scrollbar-thumb{background:#3a2008;border-radius:3px}
+
+/* ══ CHARACTER CUSTOMIZER ══ */
+#s-char{background:rgba(0,0,0,.7)}
+#s-char .inner{max-width:680px;width:96%;padding:clamp(12px,3vw,24px);max-height:94vh;overflow-y:auto}
+.char-builder{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.char-preview-wrap{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:8px}
+.char-big-frame{width:clamp(90px,18vw,140px);height:clamp(110px,22vw,170px);border:2px solid #5a3a0e;border-radius:6px;background:linear-gradient(160deg,#0a0602,#130a04);display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(0,0,0,.8),inset 0 0 30px rgba(0,0,0,.5);position:relative;overflow:hidden}
+.char-big-frame::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(245,200,66,.06),transparent 70%);pointer-events:none}
+.char-big-frame svg{width:90%;height:90%}
+.char-name-display{font-family:'Cinzel',serif;font-size:clamp(9px,2vw,12px);color:#f5c842;letter-spacing:.08em;text-align:center}
+.char-options{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.co-section{background:rgba(0,0,0,.3);border:1px solid #3a2008;border-radius:4px;padding:10px 12px}
+.co-label{font-family:'Cinzel',serif;font-size:8px;color:#5a3808;letter-spacing:.18em;margin-bottom:8px;text-transform:uppercase}
+
+/* NAME INPUT */
+.char-name-input{width:100%;background:rgba(0,0,0,.5);border:1px solid #5a3a0e;border-radius:3px;color:#e8d5a0;font-family:'Share Tech Mono',monospace;font-size:clamp(11px,2vw,14px);padding:6px 10px;outline:none;caret-color:#f5c842}
+.char-name-input:focus{border-color:#8b5e1a;box-shadow:0 0 8px rgba(245,200,66,.15)}
+
+/* CLASS GRID */
+.class-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.class-card{background:linear-gradient(160deg,#1a0e06,#100804);border:2px solid #3a2008;border-radius:4px;padding:8px 6px;text-align:center;cursor:pointer;transition:.18s}
+.class-card:hover{border-color:#8b5e1a;transform:translateY(-2px)}
+.class-card.active{border-color:#f5c842;background:linear-gradient(160deg,#2a1808,#1a1006);box-shadow:0 0 12px rgba(245,200,66,.18)}
+.class-icon{font-size:clamp(18px,4vw,26px);display:block;margin-bottom:3px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))}
+.class-name{font-family:'Cinzel',serif;font-size:clamp(7px,1.5vw,9px);letter-spacing:.06em;display:block;margin-bottom:2px}
+.class-tag{font-size:7px;font-family:'IM Fell English',serif;font-style:italic;color:#6b4a10}
+
+/* COLOR SWATCHES */
+.color-row{display:flex;gap:7px;flex-wrap:wrap}
+.swatch{width:clamp(22px,4.5vw,32px);height:clamp(22px,4.5vw,32px);border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.15s;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.swatch:hover{transform:scale(1.15);border-color:rgba(255,255,255,.3)}
+.swatch.active{border-color:#f5c842;box-shadow:0 0 10px currentColor,0 2px 6px rgba(0,0,0,.5);transform:scale(1.1)}
+
+/* ACCESSORY ROW */
+.acc-row{display:flex;gap:7px;flex-wrap:wrap}
+.acc-card{background:rgba(0,0,0,.4);border:1px solid #3a2008;border-radius:4px;padding:6px 8px;cursor:pointer;font-size:clamp(14px,3vw,20px);text-align:center;min-width:36px;transition:.15s}
+.acc-card:hover{border-color:#8b5e1a;transform:scale(1.08)}
+.acc-card.active{border-color:#f5c842;background:rgba(245,200,66,.08)}
+
+/* STAT BARS */
+.stat-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.stat-bar-label{font-family:'Cinzel',serif;font-size:8px;color:#7a5830;width:52px;flex-shrink:0;letter-spacing:.06em}
+.stat-bar-track{flex:1;height:7px;background:rgba(0,0,0,.5);border-radius:4px;overflow:hidden;border:1px solid #2a1406}
+.stat-bar-fill{height:100%;border-radius:4px;transition:width .35s ease}
+.stat-bar-val{font-family:'Cinzel',serif;font-size:8px;color:#5a3808;width:24px;text-align:right;flex-shrink:0}
+
+/* HUD char name */
+#hud-char-name{font-family:'Cinzel',serif;font-size:9px;color:#c8942a;letter-spacing:.08em}
+
+/* ══ MODE SELECT MODAL ══ */
+#mode-select{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(2px)}
+#mode-select.show{display:flex}
+.mode-box{text-align:center;padding:clamp(18px,4vw,32px) clamp(20px,5vw,44px);max-width:420px;width:92%}
+.mode-title{font-family:'Cinzel Decorative',serif;font-weight:700;font-size:clamp(16px,4vw,24px);color:#f5c842;text-shadow:0 0 14px #f5c842;margin-bottom:4px}
+.mode-sub{font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(9px,2vw,12px);color:#7a5830;margin-bottom:18px;letter-spacing:.1em}
+.mode-options{display:flex;flex-direction:column;gap:10px}
+.mode-card{background:linear-gradient(160deg,#1e1208,#120c04);border:2px solid #4a3010;border-radius:6px;padding:14px 16px;cursor:pointer;transition:.2s;text-align:left;display:flex;align-items:center;gap:12px}
+.mode-card:hover{border-color:#8b5e1a;transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.6)}
+.mode-icon{font-size:clamp(24px,5vw,34px);flex-shrink:0}
+.mode-info{flex:1}
+.mode-name{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(11px,2.5vw,14px);color:#e8d5a0;letter-spacing:.06em;margin-bottom:2px}
+.mode-desc{font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(9px,1.8vw,11px);color:#7a5830}
+
+/* ══ MCQ PANE ══ */
+#mcq-pane{flex:1;min-width:0;padding:10px 14px;overflow-y:auto;background:linear-gradient(180deg,#130a04,#0f0802)}
+.mcq-question{font-family:'IM Fell English',serif;font-size:clamp(11px,2.2vw,14px);color:#e8d5a0;line-height:1.7;margin-bottom:12px;padding:10px 14px;background:rgba(0,0,0,.35);border:1px solid #3a2008;border-radius:4px}
+.mcq-progress{font-family:'Cinzel',serif;font-size:8px;color:#5a3808;letter-spacing:.15em;margin-bottom:8px;text-align:right}
+.mcq-options{display:flex;flex-direction:column;gap:8px}
+.mcq-opt{background:linear-gradient(160deg,#1e1208,#120c04);border:2px solid #4a3010;border-radius:4px;padding:10px 14px;text-align:left;cursor:pointer;font-family:'IM Fell English',serif;font-size:clamp(10px,2vw,13px);color:#c8a870;transition:.16s;display:flex;gap:8px}
+.mcq-opt:hover:not(:disabled){border-color:#8b5e1a;transform:translateX(3px)}
+.mcq-opt:disabled{cursor:default}
+.mcq-opt.correct{border-color:#4ade80;background:linear-gradient(160deg,#0c2e12,#0a2610);color:#86efac}
+.mcq-opt.wrong{border-color:#ef4444;background:linear-gradient(160deg,#2e0808,#260606);color:#fca5a5}
+.mcq-letter{font-family:'Cinzel',serif;font-weight:700;color:#6b4a10;flex-shrink:0}
+.mcq-explain{margin-top:10px;padding:10px 14px;border-radius:4px;font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(9px,1.8vw,11px);line-height:1.6;border:1px solid;display:none}
+.mcq-next-btn{margin-top:12px;display:none}
+
+</style>
+</head>
+<body>
+<div id="root">
+<div class="dungeon-bg"><div class="moon"></div><div class="curtain-l"></div><div class="curtain-r"></div><div class="torch torch-l">🔥</div><div class="torch torch-r">🔥</div></div>
+<div id="flash"></div>
+<div id="combo-banner"></div>
+<div id="lvlup">⚔ LEVEL CLEARED! ⚔</div>
+<div id="outcome-overlay"></div>
+<div id="mode-select">
+  <div class="mode-box scroll-panel">
+    <div class="mode-title">⚔ CHOOSE YOUR TRIAL ⚔</div>
+    <div class="mode-sub" id="mode-sub">How will you face this foe?</div>
+    <div class="mode-options">
+      <div class="mode-card" onclick="confirmMode('mcq')">
+        <span class="mode-icon">📝</span>
+        <div class="mode-info"><div class="mode-name">Multiple Choice</div><div class="mode-desc">Quick concept questions — fast battles</div></div>
+      </div>
+      <div class="mode-card" onclick="confirmMode('code')">
+        <span class="mode-icon">💻</span>
+        <div class="mode-info"><div class="mode-name">Code Challenge</div><div class="mode-desc">Write real code in the editor — full XP</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen show" id="s-title">
+  <div class="inner scroll-panel">
+    <div class="game-logo">Code Quest</div>
+    <div class="game-tagline">ADVENTURE · CODE · CONQUER</div>
+    <div class="lang-roster">
+      <div class="lr-card"><span class="lr-icon">🟨</span><span class="lr-name">JavaScript</span></div>
+      <div class="lr-card"><span class="lr-icon">🐍</span><span class="lr-name">Python</span></div>
+      <div class="lr-card"><span class="lr-icon">⚙️</span><span class="lr-name">C++</span></div>
+      <div class="lr-card"><span class="lr-icon">💜</span><span class="lr-name">C#</span></div>
+      <div class="lr-card"><span class="lr-icon">☕</span><span class="lr-name">Java</span></div>
+      <div class="lr-card"><span class="lr-icon">🐘</span><span class="lr-name">PHP</span></div>
+    </div>
+    <div style="font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(9px,2vw,12px);color:#7a5830;text-align:center;margin-bottom:16px;line-height:1.7">Solve real coding challenges to defeat monsters.<br>Each language has its own 5-level adventure path.</div>
+    <button class="btn btn-gold" onclick="showScreen('s-worldmap')" style="display:block;margin:0 auto;font-size:14px;padding:14px 46px">⚔ BEGIN ADVENTURE ⚔</button>
+    <button class="btn btn-dim" onclick="openCharScreen()" style="display:block;margin:10px auto 0;font-size:11px">🛡 Customize Hero</button>
+  </div>
+</div>
+
+<div class="screen" id="s-char">
+  <div class="inner scroll-panel">
+    <div class="panel-cap">🛡 CUSTOMIZE YOUR HERO 🛡</div>
+    <div class="char-builder">
+      <div class="char-preview-wrap">
+        <div class="char-big-frame" id="char-preview"></div>
+        <div class="char-name-display" id="char-name-display">Eliner</div>
+      </div>
+      <div class="char-options">
+        <div class="co-section">
+          <div class="co-label">Hero Name</div>
+          <input class="char-name-input" id="char-name-input" maxlength="14" placeholder="Enter your name" value="Eliner"/>
+        </div>
+        <div class="co-section">
+          <div class="co-label">Class</div>
+          <div class="class-grid" id="class-grid"></div>
+        </div>
+        <div class="co-section">
+          <div class="co-label">Armor Color</div>
+          <div class="color-row" id="color-row"></div>
+        </div>
+        <div class="co-section">
+          <div class="co-label">Accessory</div>
+          <div class="acc-row" id="acc-row"></div>
+        </div>
+        <div class="co-section">
+          <div class="co-label">Class Bonuses</div>
+          <div id="stat-bars"></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="saveCharAndBack()">💾 Save & Continue</button>
+      <button class="btn btn-dim" onclick="showScreen('s-title')">← Back</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s-worldmap">
+  <div class="inner scroll-panel">
+    <div class="panel-cap">⚔ CHOOSE YOUR REALM ⚔</div>
+    <div style="font-family:'IM Fell English',serif;font-style:italic;font-size:9px;color:#5a3808;text-align:center;margin-bottom:11px;letter-spacing:.15em">Each realm offers unique coding trials</div>
+    <div class="world-grid" id="world-grid"></div>
+    <button class="btn btn-dim" onclick="showScreen('s-title')" style="display:block;margin:0 auto">← Back to Title</button>
+  </div>
+</div>
+
+<div class="screen" id="s-levelmap">
+  <div class="inner scroll-panel">
+    <div class="panel-cap" id="lm-title">JAVASCRIPT REALM</div>
+    <div style="font-family:'IM Fell English',serif;font-style:italic;font-size:9px;color:#5a3808;text-align:center;margin-bottom:9px" id="lm-sub">Choose your challenge</div>
+    <div class="lvl-path" id="lvl-path"></div>
+    <button class="btn btn-dim" onclick="showScreen('s-worldmap')" style="display:block;margin:8px auto 0">← World Map</button>
+  </div>
+</div>
+
+<div id="battle-layout">
+  <div id="battle-top">
+    <div class="bt-brand">Code Quest</div>
+    <div class="bt-info" id="bt-info">JavaScript · Level 1</div>
+    <div class="bt-stats">
+      <div class="bts"><span class="l">SCORE</span><span class="v" id="bt-score" style="color:#f5c842">0</span></div>
+      <div class="bts"><span class="l">LIVES</span><span class="v" id="bt-lives" style="color:#ef4444">❤❤❤</span></div>
+      <div class="bts"><span class="l">STREAK</span><span class="v" id="bt-streak" style="color:#a07840">0</span></div>
+    </div>
+  </div>
+  <div id="arena-strip">
+    <div class="hero-side"><div class="char-frame" id="hero-frame"></div><div class="char-label" id="hero-label">HERO</div><div class="hp-hearts" id="hero-hearts"></div></div>
+    <div class="vs-glyph">⚔</div>
+    <div class="enemy-side"><div class="char-frame" id="enemy-frame"></div><div class="char-label" id="enemy-label">BUG SPRITE</div><div class="enemy-hp-wrap"><div class="ehp-bar"><div class="ehp-fill" id="ehp-fill"></div></div><div class="ehp-text" id="ehp-text">60/60</div></div></div>
+  </div>
+  <div id="problem-pane">
+    <div id="problem-header">
+      <span class="ph-badge" id="ph-diff">EASY</span>
+      <span class="ph-lang" id="ph-lang">JS</span>
+      <span class="ph-scroll" id="ph-title">Scroll of Variables</span>
+      <button id="hint-btn" onclick="showHint()">💡 Hint</button>
+      <span class="ph-xp" id="ph-xp">+100 XP</span>
+      <span id="ph-timer">--</span>
+    </div>
+    <div id="problem-body">
+      <div id="task-pane">
+        <div class="task-name" id="task-name">Challenge</div>
+        <div class="task-desc" id="task-desc"></div>
+        <div class="task-label">Examples</div>
+        <div class="task-example" id="task-example"></div>
+        <div class="task-constraints" id="task-constraints"></div>
+        <div class="task-hint hidden" id="task-hint"></div>
+      </div>
+      <div id="editor-pane">
+        <div id="editor-toolbar">
+          <span class="et-lang" id="et-lang">JavaScript</span>
+          <button class="et-btn" onclick="resetCode()">↺ Reset</button>
+          <button class="et-btn run-btn" onclick="runCode()">▶ Run &amp; Test</button>
+        </div>
+        <textarea id="code-editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+        <div id="output-area">
+          <div id="output-header"><span class="oh-title">OUTPUT / TEST RESULTS</span><span id="output-status"></span></div>
+          <div id="output-scroll"></div>
+        </div>
+      </div>
+      <div id="mcq-pane" style="display:none">
+        <div class="mcq-progress" id="mcq-progress">Question 1/3</div>
+        <div class="mcq-question" id="mcq-question"></div>
+        <div class="mcq-options" id="mcq-options"></div>
+        <div class="mcq-explain" id="mcq-explain"></div>
+        <button class="btn btn-gold mcq-next-btn" id="mcq-next-btn" onclick="mcqNext()">Next ⚔</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s-results">
+  <div class="inner scroll-panel">
+    <span style="font-size:clamp(38px,10vw,62px);text-align:center;display:block;margin-bottom:5px" id="r-icon">🏆</span>
+    <div class="res-title" id="r-title">Victory!</div>
+    <div class="res-sub" id="r-sub">The realm has been saved</div>
+    <div class="grade-seal" id="r-seal"><div class="grade-l" id="r-gl">A</div><div class="grade-lb">RANK</div></div>
+    <div class="stats-grid">
+      <div class="sg-box"><div class="sg-l">TOTAL SCORE</div><div class="sg-v" id="r-sc" style="color:#f5c842">0</div></div>
+      <div class="sg-box"><div class="sg-l">SOLVED</div><div class="sg-v" id="r-ch" style="color:#4ade80">0/0</div></div>
+      <div class="sg-box"><div class="sg-l">BEST STREAK</div><div class="sg-v" id="r-st" style="color:#fb923c">0</div></div>
+      <div class="sg-box"><div class="sg-l">XP EARNED</div><div class="sg-v" id="r-xp" style="color:#c8942a">0</div></div>
+    </div>
+    <div class="feedback" id="r-fb">Well done, adventurer!</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <button class="btn btn-gold" id="btn-again">⚔ Play Again</button>
+      <button class="btn btn-dim" onclick="goLevelMap()">Level Map</button>
+      <button class="btn btn-dim" onclick="showScreen('s-worldmap')">World Map</button>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+// ════════════════════════════════════════════════════════════
+// SVG CHARACTERS
+// ════════════════════════════════════════════════════════════
+function heroSVG(c,cls,acc){
+  c=c||'#3b82f6';cls=cls||'warrior';acc=acc||'none';
+  // Class-specific helmet/weapon shapes
+  let weapon='', helmet='', extra='';
+  if(cls==='warrior'){
+    weapon=`<rect x="62" y="30" width="4" height="38" rx="1" fill="#c0c8e0"/><rect x="56" y="46" width="16" height="4" rx="1" fill="#f5c842"/><polygon points="64,30 62,38 66,38" fill="#ffe066"/>`;
+    helmet=`<rect x="28" y="10" width="24" height="8" rx="3" fill="${c}"/><rect x="37" y="4" width="6" height="9" rx="2" fill="${c}"/><circle cx="40" cy="4" r="3" fill="#00f5ff"/>`;
+  } else if(cls==='mage'){
+    weapon=`<rect x="63" y="14" width="3" height="56" rx="1.5" fill="#5a3a0e"/><circle cx="64.5" cy="12" r="7" fill="${c}" opacity=".85"/><circle cx="64.5" cy="12" r="3.5" fill="#fff"/>`;
+    helmet=`<path d="M16 14 Q40 -8 64 14 L52 18 Q40 6 28 18Z" fill="${c}"/><circle cx="40" cy="2" r="3" fill="#ffe066"/>`;
+  } else if(cls==='rogue'){
+    weapon=`<rect x="60" y="36" width="14" height="3" rx="1" fill="#c0c8e0" transform="rotate(-30 60 36)"/><rect x="6" y="36" width="14" height="3" rx="1" fill="#c0c8e0" transform="rotate(30 6 36)"/>`;
+    helmet=`<path d="M24 12 Q40 4 56 12 L56 20 Q40 14 24 20Z" fill="${c}"/><rect x="27" y="22" width="26" height="4" rx="2" fill="#0a0a0a" opacity=".6"/>`;
+  } else if(cls==='archer'){
+    weapon=`<path d="M68 24 Q80 50 68 76" stroke="#8b5e1a" stroke-width="3" fill="none"/><line x1="68" y1="24" x2="68" y2="76" stroke="#e8d5a0" stroke-width="1"/>`;
+    helmet=`<rect x="28" y="9" width="24" height="7" rx="3" fill="${c}"/><polygon points="30,9 26,1 34,5" fill="${c}"/><polygon points="50,9 54,1 46,5" fill="${c}"/>`;
+  } else if(cls==='knight'){
+    weapon=`<rect x="60" y="26" width="6" height="44" rx="1" fill="#c0c8e0"/><rect x="54" y="48" width="18" height="5" rx="1" fill="#f5c842"/><polygon points="63,26 59,36 67,36" fill="#ffe066"/>`;
+    helmet=`<rect x="26" y="6" width="28" height="12" rx="3" fill="${c}"/><rect x="32" y="18" width="16" height="4" fill="#0a0a0a" opacity=".5"/><rect x="36" y="0" width="8" height="7" rx="2" fill="#f5c842"/>`;
+  } else { // necromancer
+    weapon=`<rect x="63" y="12" width="3" height="58" rx="1.5" fill="#1a1a2e"/><circle cx="64.5" cy="10" r="7" fill="#a855f7" opacity=".8"/><circle cx="64.5" cy="10" r="3" fill="#e9d5ff"/>`;
+    helmet=`<path d="M24 12 Q40 -6 56 12 L50 18 Q40 8 30 18Z" fill="#2e1065"/><circle cx="40" cy="3" r="3" fill="#a855f7"/>`;
+  }
+  // Accessory overlays
+  if(acc==='cape'){
+    extra+=`<path d="M22 44 Q10 70 16 96 L30 88 Q26 64 30 46Z" fill="${c}" opacity=".55"/>`;
+  } else if(acc==='shield'){
+    extra+=`<ellipse cx="10" cy="58" rx="9" ry="13" fill="#8b5e1a" stroke="#f5c842" stroke-width="1.5"/><circle cx="10" cy="58" r="3" fill="#f5c842"/>`;
+  } else if(acc==='wings'){
+    extra+=`<path d="M20 48 Q2 36 4 18 Q6 8 16 16 Q22 28 22 48Z" fill="#fff" opacity=".5"/><path d="M60 48 Q78 36 76 18 Q74 8 64 16 Q58 28 58 48Z" fill="#fff" opacity=".5"/>`;
+  } else if(acc==='crown'){
+    extra+=`<polygon points="28,8 32,1 36,8 40,0 44,8 48,1 52,8" fill="#f5c842" stroke="#c8942a" stroke-width=".5"/>`;
+  }
+  return `<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="hg" cx="50%" cy="40%"><stop offset="0%" stop-color="${c}" stop-opacity=".4"/><stop offset="100%" stop-color="${c}" stop-opacity="0"/></radialGradient></defs><ellipse cx="40" cy="94" rx="25" ry="5" fill="${c}" opacity=".18"/>${extra}<rect x="26" y="74" width="11" height="20" rx="3" fill="#1e3a6e"/><rect x="43" y="74" width="11" height="20" rx="3" fill="#1e3a6e"/><rect x="24" y="88" width="14" height="8" rx="3" fill="#0f1e40"/><rect x="42" y="88" width="14" height="8" rx="3" fill="#0f1e40"/><rect x="22" y="44" width="36" height="32" rx="5" fill="${c}"/><rect x="22" y="44" width="36" height="32" rx="5" fill="url(#hg)" opacity=".5"/><rect x="30" y="48" width="20" height="16" rx="3" fill="#fff" opacity=".12"/><rect x="22" y="72" width="36" height="5" rx="2" fill="#0a1428"/><rect x="36" y="72" width="8" height="5" fill="#f5c842" opacity=".8"/><rect x="8" y="46" width="14" height="24" rx="4" fill="${c}"/><rect x="58" y="46" width="14" height="24" rx="4" fill="${c}"/><rect x="6" y="66" width="16" height="10" rx="3" fill="#0f1e40"/><rect x="58" y="66" width="16" height="10" rx="3" fill="#0f1e40"/>${weapon}<rect x="34" y="34" width="12" height="12" rx="3" fill="${c}"/><rect x="24" y="12" width="32" height="26" rx="6" fill="${c}"/><rect x="27" y="20" width="26" height="8" rx="3" fill="#00f5ff" opacity=".88"/>${helmet}</svg>`;
+}
+function bugSVG(){return `<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="40" cy="92" rx="22" ry="5" fill="#22c55e" opacity=".2"/><line x1="20" y1="65" x2="4" y2="55" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/><line x1="20" y1="72" x2="2" y2="70" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/><line x1="60" y1="65" x2="76" y2="55" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/><line x1="60" y1="72" x2="78" y2="70" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/><ellipse cx="40" cy="68" rx="22" ry="24" fill="#16a34a"/><ellipse cx="40" cy="60" rx="18" ry="7" fill="#22c55e" opacity=".38"/><ellipse cx="40" cy="72" rx="18" ry="7" fill="#22c55e" opacity=".28"/><path d="M22 58 Q40 48 58 58" stroke="#4ade80" stroke-width="1.5" fill="none" opacity=".5"/><ellipse cx="22" cy="52" rx="13" ry="9" fill="#86efac" opacity=".3" transform="rotate(-20 22 52)"/><ellipse cx="58" cy="52" rx="13" ry="9" fill="#86efac" opacity=".3" transform="rotate(20 58 52)"/><ellipse cx="40" cy="42" rx="10" ry="7" fill="#15803d"/><circle cx="40" cy="30" r="19" fill="#15803d"/><line x1="32" y1="14" x2="22" y2="2" stroke="#16a34a" stroke-width="2"/><circle cx="22" cy="2" r="3" fill="#4ade80"/><line x1="48" y1="14" x2="58" y2="2" stroke="#16a34a" stroke-width="2"/><circle cx="58" cy="2" r="3" fill="#4ade80"/><circle cx="30" cy="28" r="7" fill="#fff"/><circle cx="50" cy="28" r="7" fill="#fff"/><circle cx="31" cy="29" r="4" fill="#f00"/><circle cx="51" cy="29" r="4" fill="#f00"/><circle cx="32" cy="28" r="2" fill="#000"/><circle cx="52" cy="28" r="2" fill="#000"/><path d="M33 38 Q40 43 47 38" stroke="#4ade80" stroke-width="2" fill="none"/></svg>`;}
+function phantomSVG(){return `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg"><ellipse cx="40" cy="102" rx="20" ry="5" fill="#7c3aed" opacity=".28"/><path d="M18 70 Q10 88 18 100 Q22 110 28 100 Q34 90 40 100 Q46 110 52 100 Q58 90 62 100 Q68 110 62 70Z" fill="#4c1d95" opacity=".85"/><ellipse cx="40" cy="52" rx="23" ry="28" fill="#4c1d95"/><path d="M18 44 Q4 36 2 26 Q0 16 8 18" stroke="#7c3aed" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M62 44 Q76 36 78 26 Q80 16 72 18" stroke="#7c3aed" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="40" cy="24" r="21" fill="#4c1d95"/><ellipse cx="40" cy="12" rx="21" ry="11" fill="#2e1065"/><ellipse cx="30" cy="24" rx="6" ry="4" fill="#c4b5fd" opacity=".9"/><ellipse cx="50" cy="24" rx="6" ry="4" fill="#c4b5fd" opacity=".9"/><circle cx="30" cy="24" r="3" fill="#7c3aed"/><circle cx="50" cy="24" r="3" fill="#7c3aed"/><circle cx="30" cy="24" r="1.5" fill="#fff"/><circle cx="50" cy="24" r="1.5" fill="#fff"/><path d="M32 34 L34 38 L36 34 L38 38 L40 34 L42 38 L44 34 L46 38 L48 34" stroke="#c4b5fd" stroke-width="1.5" fill="none"/></svg>`;}
+function demonSVG(){return `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg"><ellipse cx="40" cy="102" rx="25" ry="6" fill="#ef4444" opacity=".2"/><path d="M52 84 Q68 92 72 82 Q76 70 64 74" stroke="#b91c1c" stroke-width="4" fill="none" stroke-linecap="round"/><polygon points="64,74 72,70 70,78" fill="#ef4444"/><rect x="25" y="78" width="12" height="24" rx="4" fill="#7f1d1d"/><rect x="43" y="78" width="12" height="24" rx="4" fill="#7f1d1d"/><rect x="20" y="44" width="40" height="36" rx="6" fill="#991b1b"/><path d="M20 50 Q2 28 6 12 Q10 2 18 10 Q22 20 20 50Z" fill="#7f1d1d" opacity=".9"/><path d="M60 50 Q78 28 74 12 Q70 2 62 10 Q58 20 60 50Z" fill="#7f1d1d" opacity=".9"/><rect x="6" y="48" width="14" height="28" rx="4" fill="#991b1b"/><rect x="60" y="48" width="14" height="28" rx="4" fill="#991b1b"/><path d="M6 74 L2 82 M10 76 L8 84 M14 76 L14 84" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/><path d="M74 74 L78 82 M70 76 L72 84 M66 76 L66 84" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/><rect x="30" y="34" width="20" height="14" rx="4" fill="#991b1b"/><ellipse cx="40" cy="22" rx="22" ry="18" fill="#b91c1c"/><path d="M24 10 Q16 -4 22 -2 Q26 4 28 14Z" fill="#7f1d1d"/><path d="M56 10 Q64 -4 58 -2 Q54 4 52 14Z" fill="#7f1d1d"/><ellipse cx="30" cy="20" rx="7" ry="5" fill="#ff8c00"/><ellipse cx="50" cy="20" rx="7" ry="5" fill="#ff8c00"/><circle cx="30" cy="20" r="3.5" fill="#ff4500"/><circle cx="50" cy="20" r="3.5" fill="#ff4500"/><circle cx="30" cy="20" r="1.5" fill="#fff"/><circle cx="50" cy="20" r="1.5" fill="#fff"/><path d="M28 30 Q40 38 52 30" stroke="#ff6666" stroke-width="2" fill="none"/><rect x="34" y="30" width="4" height="6" rx="1" fill="#fff"/><rect x="42" y="30" width="4" height="6" rx="1" fill="#fff"/></svg>`;}
+function witchSVG(){return `<svg viewBox="0 0 80 115" xmlns="http://www.w3.org/2000/svg"><ellipse cx="40" cy="108" rx="24" ry="6" fill="#fb923c" opacity=".18"/><path d="M16 80 Q10 102 14 112 Q24 118 40 116 Q56 118 66 112 Q70 102 64 80Z" fill="#431407"/><rect x="18" y="44" width="44" height="38" rx="6" fill="#7c2d12"/><path d="M18 50 Q4 54 2 66 Q0 74 8 72 Q12 60 18 56Z" fill="#7c2d12"/><path d="M62 50 Q76 54 78 66 Q80 74 72 72 Q68 60 62 56Z" fill="#7c2d12"/><circle cx="8" cy="72" r="5" fill="#ea580c"/><circle cx="72" cy="72" r="5" fill="#ea580c"/><rect x="68" y="12" width="4" height="64" rx="2" fill="#431407"/><circle cx="70" cy="12" r="7" fill="#fb923c" opacity=".9"/><circle cx="70" cy="12" r="4" fill="#fde68a"/><circle cx="70" cy="12" r="2" fill="#fff"/><rect x="30" y="34" width="20" height="14" rx="3" fill="#ea580c"/><ellipse cx="40" cy="24" rx="20" ry="17" fill="#c2410c"/><path d="M14 18 Q40 6 66 18 L56 20 Q40 10 24 20Z" fill="#431407"/><path d="M24 20 Q40 8 56 20 L52 10 Q40 2 28 10Z" fill="#431407"/><path d="M28 10 Q40 -2 52 10 L50 4 Q40 -4 30 4Z" fill="#431407"/><rect x="18" y="16" width="44" height="5" rx="2" fill="#fb923c" opacity=".6"/><ellipse cx="30" cy="24" rx="6" ry="5" fill="#fef3c7"/><ellipse cx="50" cy="24" rx="6" ry="5" fill="#fef3c7"/><circle cx="30" cy="25" r="3" fill="#7c2d12"/><circle cx="50" cy="25" r="3" fill="#7c2d12"/><circle cx="31" cy="24" r="1.5" fill="#fff"/><circle cx="51" cy="24" r="1.5" fill="#fff"/><path d="M30 34 Q40 40 50 34" stroke="#fb923c" stroke-width="1.5" fill="none"/></svg>`;}
+function overlordSVG(){return `<svg viewBox="0 0 90 115" xmlns="http://www.w3.org/2000/svg"><ellipse cx="45" cy="108" rx="30" ry="7" fill="#e11d48" opacity=".22"/><path d="M8 62 Q4 92 8 112 Q20 122 45 120 Q70 122 82 112 Q86 92 82 62 Q72 74 60 72 Q45 67 30 72 Q18 74 8 62Z" fill="#3f0818"/><rect x="22" y="44" width="46" height="30" rx="5" fill="#881337"/><polygon points="45,48 50,55 45,62 40,55" fill="#f43f5e"/><polygon points="45,50 49,55 45,60 41,55" fill="#ff6b8a"/><ellipse cx="20" cy="48" rx="10" ry="8" fill="#881337"/><ellipse cx="70" cy="48" rx="10" ry="8" fill="#881337"/><rect x="4" y="48" width="18" height="24" rx="5" fill="#6b0020"/><rect x="68" y="48" width="18" height="24" rx="5" fill="#6b0020"/><rect x="2" y="14" width="5" height="50" rx="1.5" fill="#9ca3af"/><rect x="-2" y="32" width="13" height="4" rx="1" fill="#f5c842"/><rect x="83" y="14" width="5" height="50" rx="1.5" fill="#9ca3af"/><rect x="79" y="32" width="13" height="4" rx="1" fill="#f5c842"/><rect x="33" y="32" width="24" height="14" rx="4" fill="#881337"/><ellipse cx="45" cy="20" rx="24" ry="20" fill="#f1f5f9"/><ellipse cx="45" cy="34" rx="18" ry="8" fill="#e2e8f0"/><rect x="30" y="32" width="5" height="6" rx="1" fill="#1e293b"/><rect x="37" y="32" width="5" height="6" rx="1" fill="#1e293b"/><rect x="44" y="32" width="5" height="6" rx="1" fill="#1e293b"/><rect x="51" y="32" width="5" height="6" rx="1" fill="#1e293b"/><rect x="22" y="4" width="46" height="10" rx="2" fill="#f5c842"/><polygon points="22,14 22,4 28,0 34,4" fill="#f5c842"/><polygon points="34,14 34,4 40,0 46,4" fill="#f5c842"/><polygon points="46,14 46,4 52,0 58,4" fill="#f5c842"/><polygon points="58,14 58,4 64,0 68,4" fill="#f5c842"/><circle cx="28" cy="5" r="3" fill="#e11d48"/><circle cx="40" cy="3" r="3" fill="#f43f5e"/><circle cx="52" cy="3" r="3" fill="#e11d48"/><circle cx="64" cy="5" r="3" fill="#f43f5e"/><ellipse cx="34" cy="18" rx="7" ry="6" fill="#0f172a"/><ellipse cx="56" cy="18" rx="7" ry="6" fill="#0f172a"/><circle cx="34" cy="18" r="4" fill="#e11d48" opacity=".9"/><circle cx="56" cy="18" r="4" fill="#e11d48" opacity=".9"/><circle cx="34" cy="18" r="2" fill="#ff6b8a"/><circle cx="56" cy="18" r="2" fill="#ff6b8a"/><circle cx="34" cy="18" r="1" fill="#fff"/><circle cx="56" cy="18" r="1" fill="#fff"/></svg>`;}
+function hydraSVG(){return `<svg viewBox="0 0 90 115" xmlns="http://www.w3.org/2000/svg"><ellipse cx="45" cy="108" rx="28" ry="7" fill="#10b981" opacity=".22"/><path d="M14 60 Q6 90 14 110 Q26 120 45 118 Q64 120 76 110 Q84 90 76 60Z" fill="#065f46"/><rect x="20" y="42" width="50" height="32" rx="6" fill="#047857"/><ellipse cx="45" cy="36" rx="22" ry="18" fill="#059669"/><ellipse cx="34" cy="34" rx="6" ry="5" fill="#fff"/><circle cx="34" cy="34" r="3" fill="#facc15"/><path d="M10 20 Q6 4 16 6 Q22 14 18 28Z" fill="#047857"/><ellipse cx="14" cy="6" rx="7" ry="6" fill="#10b981"/><ellipse cx="10" cy="5" rx="3" ry="2.5" fill="#fff"/><circle cx="10" cy="5" r="1.4" fill="#facc15"/><path d="M45 14 Q41 -2 51 0 Q57 8 53 22Z" fill="#047857"/><ellipse cx="49" cy="0" rx="7" ry="6" fill="#10b981"/><ellipse cx="46" cy="-1" rx="3" ry="2.5" fill="#fff"/><circle cx="46" cy="-1" r="1.4" fill="#facc15"/><path d="M80 20 Q84 4 74 6 Q68 14 72 28Z" fill="#047857"/><ellipse cx="76" cy="6" rx="7" ry="6" fill="#10b981"/><ellipse cx="80" cy="5" rx="3" ry="2.5" fill="#fff"/><circle cx="80" cy="5" r="1.4" fill="#facc15"/><ellipse cx="56" cy="34" rx="6" ry="5" fill="#fff"/><circle cx="56" cy="34" r="3" fill="#facc15"/><path d="M28 48 Q45 56 62 48" stroke="#10b981" stroke-width="2" fill="none"/><rect x="14" y="74" width="14" height="26" rx="4" fill="#065f46"/><rect x="62" y="74" width="14" height="26" rx="4" fill="#065f46"/></svg>`;}
+function wraithSVG(){return `<svg viewBox="0 0 90 115" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="wrg" cx="50%" cy="35%"><stop offset="0%" stop-color="#38bdf8" stop-opacity=".55"/><stop offset="100%" stop-color="#0c4a6e" stop-opacity="0"/></radialGradient></defs><ellipse cx="45" cy="108" rx="28" ry="7" fill="#38bdf8" opacity=".2"/><path d="M16 58 Q6 86 16 108 Q22 118 30 106 Q38 92 45 106 Q52 92 60 106 Q68 118 74 108 Q84 86 74 58Z" fill="#0c4a6e" opacity=".9"/><path d="M16 58 Q6 86 16 108 Q22 118 30 106 Q38 92 45 106 Q52 92 60 106 Q68 118 74 108 Q84 86 74 58Z" fill="url(#wrg)"/><ellipse cx="45" cy="40" rx="26" ry="32" fill="#0e7490"/><ellipse cx="45" cy="40" rx="26" ry="32" fill="url(#wrg)" opacity=".7"/><path d="M20 30 Q2 20 0 4 Q-2 -8 8 -4 Q16 8 20 30Z" fill="#0e7490" opacity=".85"/><path d="M70 30 Q88 20 90 4 Q92 -8 82 -4 Q74 8 70 30Z" fill="#0e7490" opacity=".85"/><ellipse cx="45" cy="24" rx="24" ry="20" fill="#0c4a6e"/><ellipse cx="45" cy="10" rx="24" ry="13" fill="#082f49"/><ellipse cx="34" cy="26" rx="7" ry="5" fill="#7dd3fc" opacity=".95"/><ellipse cx="56" cy="26" rx="7" ry="5" fill="#7dd3fc" opacity=".95"/><circle cx="34" cy="26" r="3.5" fill="#082f49"/><circle cx="56" cy="26" r="3.5" fill="#082f49"/><circle cx="34" cy="26" r="1.6" fill="#fff"/><circle cx="56" cy="26" r="1.6" fill="#fff"/><path d="M32 38 L36 44 L40 38 L44 44 L48 38 L52 44 L56 38" stroke="#7dd3fc" stroke-width="2" fill="none"/></svg>`;}
+
+const ENEMY_SVGS=[bugSVG,phantomSVG,demonSVG,witchSVG,overlordSVG,hydraSVG,wraithSVG];
+const ENEMY_COLORS=['#22c55e','#a78bfa','#f87171','#fb923c','#e11d48','#10b981','#38bdf8'];
+const ENEMY_NAMES=['Bug Sprite','Null Phantom','Logic Demon','Syntax Witch','Stack Overlord','Recursion Hydra','Memory Wraith'];
+const ENEMY_HP=[60,80,110,150,200,240,280];
+</script>
+<script>
+// ════════════════════════════════════════════════════════════
+// LANGUAGE + LEVEL DATA
+// ════════════════════════════════════════════════════════════
+const LANGS={
+javascript:{id:'javascript',name:'JavaScript',short:'JS',icon:'🟨',color:'#f7df1e',desc:'Conquer the Web Realm',levels:[
+{title:'The Scroll of Greetings',diff:'EASY',xp:80,task:'Print "Hello, World!" to the output.\n\nThen on the next line, print your name using a variable.\n\nFor example if your name is Eliner, the output should be:\nHello, World!\nMy name is Eliner',example:'Expected output:\nHello, World!\nMy name is Eliner',hint:'Use console.log() twice. Store your name in a variable first.',constraints:['Print exactly Hello, World! first','Print your name on the second line using a variable','Use a variable for the name'],starter:'// Print Hello, World! and then your name\n// Use a variable for your name\n\nlet name = "Eliner"; // change this to your name\n\n// your code here\n',tests:[{i:[],e:'Hello, World!\nMy name is Eliner',d:'Hello World + name output'}],fn:'__output__',lang:'js'},
+{title:'The Loop Dungeon',diff:'EASY',xp:100,task:'Write a function `sumArray` that takes an array of numbers and returns their total sum.',example:'sumArray([1,2,3])    →  6\nsumArray([10,20,30]) →  60\nsumArray([])         →  0',hint:'Use a for loop or Array.reduce() to accumulate the sum.',constraints:['Function named sumArray','Handle empty arrays — return 0','Works with any numbers'],starter:'function sumArray(arr) {\n  // Sum all elements and return the total\n  \n}',tests:[{i:[[1,2,3]],e:6,d:'sumArray([1,2,3])'},{i:[[10,20,30]],e:60,d:'sumArray([10,20,30])'},{i:[[]],e:0,d:'sumArray([])'},{i:[[-1,-2,3]],e:0,d:'sumArray([-1,-2,3])'}],fn:'sumArray',lang:'js'},
+{title:'The Condition Caves',diff:'MEDIUM',xp:140,task:'Write a function `fizzBuzz` that takes a number n and returns:\n"FizzBuzz" if divisible by both 3 and 5\n"Fizz" if divisible by 3 only\n"Buzz" if divisible by 5 only\nThe number as a string otherwise',example:'fizzBuzz(15)  →  "FizzBuzz"\nfizzBuzz(9)   →  "Fizz"\nfizzBuzz(10)  →  "Buzz"\nfizzBuzz(7)   →  "7"',hint:'Check divisibility by 15 first (3 AND 5), then 3, then 5.',constraints:['Function named fizzBuzz','Returns a STRING in all cases','Check 15 before 3 and 5'],starter:'function fizzBuzz(n) {\n  // Return "FizzBuzz", "Fizz", "Buzz", or number as string\n  \n}',tests:[{i:[15],e:'FizzBuzz',d:'fizzBuzz(15)'},{i:[9],e:'Fizz',d:'fizzBuzz(9)'},{i:[10],e:'Buzz',d:'fizzBuzz(10)'},{i:[7],e:'7',d:'fizzBuzz(7)'},{i:[1],e:'1',d:'fizzBuzz(1)'}],fn:'fizzBuzz',lang:'js'},
+{title:'The Array Fortress',diff:'MEDIUM',xp:180,task:'Write a function `removeDuplicates` that takes an array and returns a new array with duplicate values removed, keeping only the first occurrence of each value.',example:'removeDuplicates([1,2,2,3,1])   →  [1,2,3]\nremoveDuplicates(["a","b","a"])  →  ["a","b"]\nremoveDuplicates([1,1,1])        →  [1]',hint:'Use a Set: return [...new Set(arr)] to remove duplicates.',constraints:['Function named removeDuplicates','Preserves original order','Keeps first occurrence only'],starter:'function removeDuplicates(arr) {\n  // Return new array with duplicates removed\n  \n}',tests:[{i:[[1,2,2,3,1]],e:[1,2,3],d:'removeDuplicates([1,2,2,3,1])'},{i:[['a','b','a']],e:['a','b'],d:'removeDuplicates(["a","b","a"])'},{i:[[1,1,1]],e:[1],d:'all same'},{i:[[1,2,3]],e:[1,2,3],d:'no duplicates'}],fn:'removeDuplicates',lang:'js'},
+{title:'The Palindrome Boss',diff:'HARD',xp:250,task:'Write a function `isPalindrome` that returns true if a string reads the same forwards and backwards. Ignore case and all non-alphanumeric characters.',example:'isPalindrome("racecar")                   →  true\nisPalindrome("A man a plan a canal Panama") →  true\nisPalindrome("hello")                      →  false',hint:'Remove non-alphanumeric chars with replace(/[^a-z0-9]/gi,""), lowercase, then compare to .split("").reverse().join("").',constraints:['Function named isPalindrome','Case insensitive','Ignore spaces and punctuation','Return a boolean'],starter:'function isPalindrome(s) {\n  // Return true if s is a palindrome (ignore case/non-alphanumeric)\n  \n}',tests:[{i:['racecar'],e:true,d:'"racecar"'},{i:['A man a plan a canal Panama'],e:true,d:'classic palindrome'},{i:['hello'],e:false,d:'"hello"'},{i:['Was it a car or a cat I saw'],e:true,d:'spaces+caps'},{i:['Not a palindrome'],e:false,d:'not a palindrome'}],fn:'isPalindrome',lang:'js'},
+{title:'The Recursion Hydra',diff:'HARD',xp:280,task:'Write a function `factorial` that returns the factorial of n (n!) using recursion. factorial(0) is 1.',example:'factorial(0)  →  1\nfactorial(1)  →  1\nfactorial(5)  →  120\nfactorial(6)  →  720',hint:'Base case: if n <= 1 return 1. Recursive case: return n * factorial(n-1).',constraints:['Function named factorial','Must use recursion','factorial(0) === 1'],starter:'function factorial(n) {\n  // Return n! using recursion\n  \n}',tests:[{i:[0],e:1,d:'factorial(0)'},{i:[1],e:1,d:'factorial(1)'},{i:[5],e:120,d:'factorial(5)'},{i:[6],e:720,d:'factorial(6)'}],fn:'factorial',lang:'js'},
+{title:'The Memory Wraith',diff:'HARD',xp:300,task:'Write a function `twoSum` that takes an array of integers and a target, and returns the indices [i,j] (i<j) where arr[i]+arr[j]===target. Return [-1,-1] if no solution.',example:'twoSum([2,7,11,15], 9)  →  [0,1]\ntwoSum([3,2,4], 6)       →  [1,2]\ntwoSum([1,2,3], 100)     →  [-1,-1]',hint:'Use a Map to store value→index as you iterate, checking if (target - current) was seen before.',constraints:['Function named twoSum','Return [-1,-1] if no pair found','i < j always','O(n) preferred using a Map'],starter:'function twoSum(arr, target) {\n  // Return [i,j] where arr[i]+arr[j]===target\n  \n}',tests:[{i:[[2,7,11,15],9],e:[0,1],d:'[2,7,11,15], target=9'},{i:[[3,2,4],6],e:[1,2],d:'[3,2,4], target=6'},{i:[[1,2,3],100],e:[-1,-1],d:'no solution'},{i:[[3,3],6],e:[0,1],d:'duplicate values'}],fn:'twoSum',lang:'js'}
+]},
+python:{id:'python',name:'Python',short:'PY',icon:'🐍',color:'#3b82f6',desc:'Traverse the Serpent Lands',levels:[
+{title:'The Indentation Shrine',diff:'EASY',xp:80,task:'Print "Hello, World!" to the output.\n\nThen on the next line, print your name using a variable.\n\nExpected output:\nHello, World!\nMy name is Eliner',example:'Expected output:\nHello, World!\nMy name is Eliner',hint:'Use print() twice. Store your name in a variable first.',constraints:['Print exactly Hello, World! first','Print your name on the second line using a variable','Use a variable for the name'],starter:'# Print Hello, World! and then your name\n# Use a variable for your name\n\nname = "Eliner"  # change this to your name\n\n# your code here\n',tests:[{i:[],e:'Hello, World!\nMy name is Eliner',d:'Hello World + name output'}],fn:'__output__',lang:'py'},
+{title:'The Comprehension Caves',diff:'EASY',xp:100,task:'Write a function `even_numbers` that takes a list of integers and returns a new list containing only the even numbers.',example:'even_numbers([1,2,3,4,5,6]) →  [2,4,6]\neven_numbers([1,3,5])        →  []\neven_numbers([])             →  []',hint:'Use a list comprehension: [x for x in lst if x % 2 == 0]',constraints:['Function named even_numbers','Returns a new list','Handle empty lists'],starter:'def even_numbers(lst):\n    # Return list of only even numbers\n    pass',tests:[{i:[[1,2,3,4,5,6]],e:[2,4,6],d:'[1,2,3,4,5,6]'},{i:[[1,3,5]],e:[],d:'no evens'},{i:[[2,4,6]],e:[2,4,6],d:'all even'},{i:[[]],e:[],d:'empty list'}],fn:'even_numbers',lang:'py'},
+{title:'The Dictionary Dungeon',diff:'MEDIUM',xp:140,task:'Write a function `count_chars` that takes a string and returns a dictionary with the count of each character. Exclude spaces. Case-sensitive.',example:'count_chars("hello")  →  {"h":1,"e":1,"l":2,"o":1}\ncount_chars("aab")    →  {"a":2,"b":1}\ncount_chars("a b")    →  {"a":1,"b":1}',hint:'Loop through characters, skip spaces, use a dict to count occurrences.',constraints:['Function named count_chars','Case-sensitive counting','Exclude spaces'],starter:'def count_chars(s):\n    # Return dict of character counts, no spaces\n    pass',tests:[{i:['hello'],e:{h:1,e:1,l:2,o:1},d:'count_chars("hello")'},{i:['aab'],e:{a:2,b:1},d:'count_chars("aab")'},{i:['a b c'],e:{a:1,b:1,c:1},d:'spaces excluded'}],fn:'count_chars',lang:'py'},
+{title:'The Recursion Tower',diff:'MEDIUM',xp:180,task:'Write a function `fibonacci` that returns the nth Fibonacci number (0-indexed): fib(0)=0, fib(1)=1, fib(2)=1, fib(3)=2, fib(4)=3...',example:'fibonacci(0)  →  0\nfibonacci(1)  →  1\nfibonacci(6)  →  8\nfibonacci(10) →  55',hint:'Use an iterative approach with two variables (a, b) for best performance.',constraints:['Function named fibonacci','fib(0)=0, fib(1)=1 as base cases','Works for n 0 through 30'],starter:'def fibonacci(n):\n    # Return the nth Fibonacci number\n    pass',tests:[{i:[0],e:0,d:'fibonacci(0)'},{i:[1],e:1,d:'fibonacci(1)'},{i:[6],e:8,d:'fibonacci(6)'},{i:[10],e:55,d:'fibonacci(10)'}],fn:'fibonacci',lang:'py'},
+{title:'The Sorting Citadel',diff:'HARD',xp:250,task:'Write a function `is_balanced` that checks if a string of brackets (, ), [, ], {, } is balanced (every opener has a matching closer in correct order).',example:'is_balanced("()[]{}")  →  True\nis_balanced("([)]")    →  False\nis_balanced("{[]}")    →  True\nis_balanced("")        →  True',hint:'Use a stack (list). Push openers, pop and check matching closer.',constraints:['Function named is_balanced','Handles (), [], {}','Returns Python bool True/False','Empty string returns True'],starter:'def is_balanced(s):\n    # Return True if all brackets are balanced\n    pass',tests:[{i:['()[]{}'],e:true,d:'"()[]{}"'},{i:['([)]'],e:false,d:'"([)]"'},{i:['{[]}'],e:true,d:'"{[]}"'},{i:[''],e:true,d:'empty string'},{i:['((('],e:false,d:'unclosed'}],fn:'is_balanced',lang:'py'},
+{title:'The Recursion Hydra',diff:'HARD',xp:280,task:'Write a function `factorial` that returns the factorial of n (n!) using recursion. factorial(0) is 1.',example:'factorial(0)  →  1\nfactorial(1)  →  1\nfactorial(5)  →  120\nfactorial(6)  →  720',hint:'Base case: if n <= 1 return 1. Recursive case: return n * factorial(n-1).',constraints:['Function named factorial','Must use recursion','factorial(0) == 1'],starter:'def factorial(n):\n    # Return n! using recursion\n    pass',tests:[{i:[0],e:1,d:'factorial(0)'},{i:[1],e:1,d:'factorial(1)'},{i:[5],e:120,d:'factorial(5)'},{i:[6],e:720,d:'factorial(6)'}],fn:'factorial',lang:'py'},
+{title:'The Memory Wraith',diff:'HARD',xp:300,task:'Write a function `two_sum` that takes a list of integers and a target, and returns the indices [i,j] (i<j) where lst[i]+lst[j]==target. Return [-1,-1] if no solution.',example:'two_sum([2,7,11,15], 9)  →  [0,1]\ntwo_sum([3,2,4], 6)       →  [1,2]\ntwo_sum([1,2,3], 100)     →  [-1,-1]',hint:'Use a dict mapping value to index as you iterate, checking if (target - current) was seen before.',constraints:['Function named two_sum','Return [-1,-1] if no pair found','i < j always','O(n) preferred using a dict'],starter:'def two_sum(lst, target):\n    # Return [i,j] where lst[i]+lst[j]==target\n    pass',tests:[{i:[[2,7,11,15],9],e:[0,1],d:'[2,7,11,15], target=9'},{i:[[3,2,4],6],e:[1,2],d:'[3,2,4], target=6'},{i:[[1,2,3],100],e:[-1,-1],d:'no solution'},{i:[[3,3],6],e:[0,1],d:'duplicate values'}],fn:'two_sum',lang:'py'}
+]},
+cpp:{id:'cpp',name:'C++',short:'C++',icon:'⚙️',color:'#818cf8',desc:'Storm the Iron Fortress',levels:[
+{title:'The Pointer Maze',diff:'EASY',xp:80,task:'Print "Hello, World!" to the output.\n\nThen on the next line, print your name using a variable.\n\nExpected output:\nHello, World!\nMy name is Eliner',example:'Expected output:\nHello, World!\nMy name is Eliner',hint:'Use cout << "text" << endl; and store your name in a string variable.',constraints:['Print Hello, World! first','Print name on second line using a variable','Use a string variable for name'],starter:'#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string name = "Eliner"; // change this\n    \n    // your code here\n    \n    return 0;\n}',tests:[{i:[],e:'Hello, World!\nMy name is Eliner',d:'Hello World + name output'}],fn:'__output__',lang:'cpp'},
+{title:'The Array Citadel',diff:'EASY',xp:100,task:'Write a function `sumPositives` that takes a vector of integers and returns the sum of only the positive numbers.',example:'sumPositives({1,-2,3,-4,5})  →  9\nsumPositives({-1,-2,-3})     →  0\nsumPositives({})             →  0',hint:'Loop through the vector and add only numbers greater than 0.',constraints:['Function named sumPositives','Ignore zero and negatives','Return 0 for empty or all-negative input'],starter:'int sumPositives(vector<int> arr) {\n    // Return sum of positive numbers only\n    \n}',tests:[{i:[[1,-2,3,-4,5]],e:9,d:'{1,-2,3,-4,5}'},{i:[[-1,-2,-3]],e:0,d:'all negative'},{i:[[]],e:0,d:'empty'},{i:[[5,10,15]],e:30,d:'all positive'}],fn:'sumPositives',lang:'cpp'},
+{title:'The Template Forge',diff:'MEDIUM',xp:140,task:'Write a function `isPrime` that takes an integer n and returns true if it is prime, false otherwise.',example:'isPrime(7)   →  true\nisPrime(4)   →  false\nisPrime(2)   →  true\nisPrime(1)   →  false\nisPrime(17)  →  true',hint:'Check divisors up to sqrt(n). Numbers <= 1 are not prime.',constraints:['Function named isPrime','Handles n=0,1,2 correctly','Returns bool'],starter:'bool isPrime(int n) {\n    // Return true if n is prime\n    \n}',tests:[{i:[7],e:true,d:'isPrime(7)'},{i:[4],e:false,d:'isPrime(4)'},{i:[2],e:true,d:'isPrime(2)'},{i:[1],e:false,d:'isPrime(1)'},{i:[17],e:true,d:'isPrime(17)'}],fn:'isPrime',lang:'cpp'},
+{title:'The STL Dungeon',diff:'MEDIUM',xp:180,task:'Write a function `countOccurrences` that takes a vector of integers and a target integer, and returns how many times the target appears.',example:'countOccurrences({1,2,3,2,4,2}, 2)  →  3\ncountOccurrences({1,2,3}, 5)         →  0\ncountOccurrences({}, 1)              →  0',hint:'Use a simple counter loop, or std::count from <algorithm>.',constraints:['Function named countOccurrences','Return 0 if not found','Works with empty vector'],starter:'int countOccurrences(vector<int> arr, int target) {\n    // Count how many times target appears in arr\n    \n}',tests:[{i:[[1,2,3,2,4,2],2],e:3,d:'{1,2,3,2,4,2}, 2'},{i:[[1,2,3],5],e:0,d:'not found'},{i:[[5,5,5],5],e:3,d:'all match'},{i:[[],1],e:0,d:'empty vector'}],fn:'countOccurrences',lang:'cpp'},
+{title:'The Memory Citadel',diff:'HARD',xp:250,task:'Write a function `longestConsecutive` that takes a vector of integers and returns the length of the longest consecutive sequence (e.g. 1,2,3,4 is length 4).',example:'longestConsecutive({100,4,200,1,3,2})       →  4  (1,2,3,4)\nlongestConsecutive({0,3,7,2,5,8,4,6,0,1})  →  9',hint:'Use an unordered_set. For each number, only start counting if (num-1) is NOT in the set — that means it is the start of a sequence.',constraints:['Function named longestConsecutive','Handle duplicates gracefully','Use set for O(n) approach'],starter:'int longestConsecutive(vector<int> nums) {\n    // Return length of longest consecutive sequence\n    \n}',tests:[{i:[[100,4,200,1,3,2]],e:4,d:'{100,4,200,1,3,2}'},{i:[[0,3,7,2,5,8,4,6,0,1]],e:9,d:'longer sequence'},{i:[[1]],e:1,d:'single element'},{i:[[1,2,3,4,5]],e:5,d:'already consecutive'}],fn:'longestConsecutive',lang:'cpp'},
+{title:'The Recursion Hydra',diff:'HARD',xp:280,task:'Write a function `factorial` that returns the factorial of n (n!) using recursion. factorial(0) is 1.',example:'factorial(0)  →  1\nfactorial(1)  →  1\nfactorial(5)  →  120\nfactorial(6)  →  720',hint:'Base case: if n <= 1 return 1. Recursive case: return n * factorial(n-1).',constraints:['Function named factorial','Must use recursion','factorial(0) == 1'],starter:'int factorial(int n) {\n    // Return n! using recursion\n    \n}',tests:[{i:[0],e:1,d:'factorial(0)'},{i:[1],e:1,d:'factorial(1)'},{i:[5],e:120,d:'factorial(5)'},{i:[6],e:720,d:'factorial(6)'}],fn:'factorial',lang:'cpp'},
+{title:'The Memory Wraith',diff:'HARD',xp:300,task:'Write a function `twoSum` that takes a vector of integers and a target, and returns the indices {i,j} (i<j) where arr[i]+arr[j]==target. Return {-1,-1} if no solution.',example:'twoSum({2,7,11,15}, 9)  →  {0,1}\ntwoSum({3,2,4}, 6)       →  {1,2}\ntwoSum({1,2,3}, 100)     →  {-1,-1}',hint:'Use an unordered_map<int,int> mapping value to index as you iterate, checking if (target - current) was seen before.',constraints:['Function named twoSum','Return {-1,-1} if no pair found','i < j always','O(n) preferred using a hash map'],starter:'#include <vector>\n#include <unordered_map>\nvector<int> twoSum(vector<int> arr, int target) {\n    // Return {i,j} where arr[i]+arr[j]==target\n    \n}',tests:[{i:[[2,7,11,15],9],e:[0,1],d:'{2,7,11,15}, target=9'},{i:[[3,2,4],6],e:[1,2],d:'{3,2,4}, target=6'},{i:[[1,2,3],100],e:[-1,-1],d:'no solution'},{i:[[3,3],6],e:[0,1],d:'duplicate values'}],fn:'twoSum',lang:'cpp'}
+]},
+csharp:{id:'csharp',name:'C#',short:'C#',icon:'💜',color:'#a855f7',desc:'Explore the Crystal Citadel',levels:[
+{title:'The LINQ Labyrinth',diff:'EASY',xp:80,task:'Print "Hello, World!" to the output.\n\nThen on the next line, print your name using a variable.\n\nExpected output:\nHello, World!\nMy name is Eliner',example:'Expected output:\nHello, World!\nMy name is Eliner',hint:'Use Console.WriteLine() twice. Store your name in a string variable first.',constraints:['Print Hello, World! first','Print name on second line using a variable','Use a string variable for name'],starter:'using System;\n\nclass Program {\n    static void Main(string[] args) {\n        string name = "Eliner"; // change this\n        \n        // your code here\n    }\n}',tests:[{i:[],e:'Hello, World!\nMy name is Eliner',d:'Hello World + name output'}],fn:'__output__',lang:'cs'},
+{title:'The Array Alcove',diff:'EASY',xp:100,task:'Write a method `ReverseWords` that takes a sentence string and returns it with the words in reversed order.',example:'ReverseWords("Hello World")    →  "World Hello"\nReverseWords("I love coding")   →  "coding love I"\nReverseWords("one")             →  "one"',hint:'Split by space, reverse the array, join with space.',constraints:['Method named ReverseWords','Words separated by single spaces','Returns single word unchanged'],starter:'string ReverseWords(string s) {\n    // Return s with words in reversed order\n    \n}',tests:[{i:['Hello World'],e:'World Hello',d:'"Hello World"'},{i:['I love coding'],e:'coding love I',d:'"I love coding"'},{i:['one'],e:'one',d:'single word'},{i:['a b c d'],e:'d c b a',d:'four words'}],fn:'ReverseWords',lang:'cs'},
+{title:'The Pattern Palace',diff:'MEDIUM',xp:140,task:'Write a method `IsPalindrome` that returns true if a string is the same forwards and backwards (case insensitive, letters and digits only).',example:'IsPalindrome("racecar")  →  true\nIsPalindrome("hello")    →  false\nIsPalindrome("A1b1A")    →  true',hint:'Filter to alphanumeric only with char.IsLetterOrDigit, lowercase, compare to reverse.',constraints:['Method named IsPalindrome','Case insensitive','Alphanumeric only','Returns bool'],starter:'bool IsPalindrome(string s) {\n    // Return true if s is a palindrome\n    \n}',tests:[{i:['racecar'],e:true,d:'"racecar"'},{i:['hello'],e:false,d:'"hello"'},{i:['A man a plan a canal Panama'],e:true,d:'sentence palindrome'},{i:[''],e:true,d:'empty'}],fn:'IsPalindrome',lang:'cs'},
+{title:'The Dictionary Depths',diff:'MEDIUM',xp:180,task:'Write a method `TwoSum` that takes an integer array and a target, and returns the two indices [i,j] where arr[i]+arr[j]==target. Return [-1,-1] if no solution.',example:'TwoSum([2,7,11,15], 9)  →  [0,1]\nTwoSum([3,2,4], 6)       →  [1,2]\nTwoSum([1,2,3], 10)      →  [-1,-1]',hint:'Use a Dictionary<int,int> mapping value to index for O(n) lookup.',constraints:['Method named TwoSum','Return int[] of two indices','i < j always','Return [-1,-1] if no solution'],starter:'int[] TwoSum(int[] arr, int target) {\n    // Return indices where arr[i]+arr[j]==target\n    \n}',tests:[{i:[[2,7,11,15],9],e:[0,1],d:'[2,7,11,15], target=9'},{i:[[3,2,4],6],e:[1,2],d:'[3,2,4], target=6'},{i:[[1,2,3],10],e:[-1,-1],d:'no solution'}],fn:'TwoSum',lang:'cs'},
+{title:'The LINQ Overlord',diff:'HARD',xp:250,task:'Write a method `LongestSubstring` that returns the length of the longest substring without any repeating characters.',example:'LongestSubstring("abcabcbb")  →  3\nLongestSubstring("bbbbb")     →  1\nLongestSubstring("pwwkew")    →  3\nLongestSubstring("")          →  0',hint:'Use a sliding window with a HashSet. Move right pointer, shrink left when a duplicate is found.',constraints:['Method named LongestSubstring','Sliding window approach','Empty string returns 0'],starter:'int LongestSubstring(string s) {\n    // Return length of longest non-repeating substring\n    \n}',tests:[{i:['abcabcbb'],e:3,d:'"abcabcbb"'},{i:['bbbbb'],e:1,d:'"bbbbb"'},{i:['pwwkew'],e:3,d:'"pwwkew"'},{i:[''],e:0,d:'empty'},{i:['abcdef'],e:6,d:'all unique'}],fn:'LongestSubstring',lang:'cs'},
+{title:'The Recursion Hydra',diff:'HARD',xp:280,task:'Write a method `Factorial` that returns the factorial of n (n!) using recursion. Factorial(0) is 1.',example:'Factorial(0)  →  1\nFactorial(1)  →  1\nFactorial(5)  →  120\nFactorial(6)  →  720',hint:'Base case: if n <= 1 return 1. Recursive case: return n * Factorial(n-1).',constraints:['Method named Factorial','Must use recursion','Factorial(0) == 1'],starter:'int Factorial(int n) {\n    // Return n! using recursion\n    \n}',tests:[{i:[0],e:1,d:'Factorial(0)'},{i:[1],e:1,d:'Factorial(1)'},{i:[5],e:120,d:'Factorial(5)'},{i:[6],e:720,d:'Factorial(6)'}],fn:'Factorial',lang:'cs'},
+{title:'The Memory Wraith',diff:'HARD',xp:300,task:'Write a method `TwoSumIdx` that takes an integer array and a target, and returns the indices [i,j] (i<j) where arr[i]+arr[j]==target. Return [-1,-1] if no solution.',example:'TwoSumIdx([2,7,11,15], 9)  →  [0,1]\nTwoSumIdx([3,2,4], 6)       →  [1,2]\nTwoSumIdx([1,2,3], 100)     →  [-1,-1]',hint:'Use a Dictionary<int,int> mapping value to index as you iterate, checking if (target - current) was seen before.',constraints:['Method named TwoSumIdx','Return [-1,-1] if no pair found','i < j always','O(n) preferred using a Dictionary'],starter:'int[] TwoSumIdx(int[] arr, int target) {\n    // Return [i,j] where arr[i]+arr[j]==target\n    \n}',tests:[{i:[[2,7,11,15],9],e:[0,1],d:'[2,7,11,15], target=9'},{i:[[3,2,4],6],e:[1,2],d:'[3,2,4], target=6'},{i:[[1,2,3],100],e:[-1,-1],d:'no solution'},{i:[[3,3],6],e:[0,1],d:'duplicate values'}],fn:'TwoSumIdx',lang:'cs'}
+]},
+java:{id:'java',name:'Java',short:'JV',icon:'☕',color:'#f97316',desc:'Journey to the JVM Jungle',levels:[
+{title:'The Object Oasis',diff:'EASY',xp:80,task:'Print "Hello, World!" to the output.\n\nThen on the next line, print your name using a variable.\n\nExpected output:\nHello, World!\nMy name is Eliner',example:'Expected output:\nHello, World!\nMy name is Eliner',hint:'Use System.out.println() twice. Store your name in a String variable first.',constraints:['Print Hello, World! first','Print name on second line using a variable','Use a String variable for name'],starter:'public class Main {\n    public static void main(String[] args) {\n        String name = "Eliner"; // change this\n        \n        // your code here\n    }\n}',tests:[{i:[],e:'Hello, World!\nMy name is Eliner',d:'Hello World + name output'}],fn:'__output__',lang:'java'},
+{title:'The Stream Swamp',diff:'EASY',xp:100,task:'Write a method `binarySearch` that searches for a target in a sorted integer array and returns its index, or -1 if not found.',example:'binarySearch([1,3,5,7,9,11], 7)   →  3\nbinarySearch([1,3,5,7,9,11], 4)   →  -1\nbinarySearch([1], 1)              →  0',hint:'Use two pointers lo and hi. Compare arr[mid] to target and halve the search space each iteration.',constraints:['Method named binarySearch','Array is always sorted','Return -1 if not found','Must use binary search logic'],starter:'int binarySearch(int[] arr, int target) {\n    // Binary search — return index or -1\n    \n}',tests:[{i:[[1,3,5,7,9,11],7],e:3,d:'[1,3,5,7,9,11], 7'},{i:[[1,3,5,7,9,11],4],e:-1,d:'target not found'},{i:[[1],1],e:0,d:'single element'},{i:[[2,4,6,8,10],10],e:4,d:'last element'}],fn:'binarySearch',lang:'java'},
+{title:'The Inheritance Inn',diff:'MEDIUM',xp:140,task:'Write a method `validateBrackets` that returns true if all brackets — (), [], {} — in a string are correctly matched and properly nested.',example:'validateBrackets("()[]{}")  →  true\nvalidateBrackets("([)]")    →  false\nvalidateBrackets("{[]}")    →  true\nvalidateBrackets("")        →  true',hint:'Use a Stack. Push opening brackets. When closing bracket is found, pop and check if it matches.',constraints:['Method named validateBrackets','Handles (), [], {}','Empty string returns true'],starter:'boolean validateBrackets(String s) {\n    // Return true if brackets are valid\n    \n}',tests:[{i:['()[]{}'],e:true,d:'"()[]{}"'},{i:['([)]'],e:false,d:'"([)]"'},{i:['{[]}'],e:true,d:'"{[]}"'},{i:[''],e:true,d:'empty'},{i:['((('],e:false,d:'unclosed'}],fn:'validateBrackets',lang:'java'},
+{title:'The Generic Grotto',diff:'MEDIUM',xp:180,task:'Write a method `mergeSortedArrays` that merges two sorted integer arrays into one sorted array.',example:'mergeSortedArrays([1,3,5],[2,4,6])  →  [1,2,3,4,5,6]\nmergeSortedArrays([1,2],[3,4])      →  [1,2,3,4]\nmergeSortedArrays([],[1,2])         →  [1,2]',hint:'Use two pointers (one per array), pick the smaller element each step.',constraints:['Method named mergeSortedArrays','Both inputs are sorted ascending','Result must be sorted','Do not use Arrays.sort on merged result'],starter:'int[] mergeSortedArrays(int[] a, int[] b) {\n    // Merge two sorted arrays into one sorted array\n    \n}',tests:[{i:[[1,3,5],[2,4,6]],e:[1,2,3,4,5,6],d:'[1,3,5],[2,4,6]'},{i:[[1,2],[3,4]],e:[1,2,3,4],d:'[1,2],[3,4]'},{i:[[],[1,2,3]],e:[1,2,3],d:'first empty'},{i:[[1],[1]],e:[1,1],d:'duplicates'}],fn:'mergeSortedArrays',lang:'java'},
+{title:'The JVM Final Boss',diff:'HARD',xp:250,task:'Write a method `maxProfit` that takes an array of stock prices (one per day) and returns the maximum profit you can make by buying on one day and selling on a later day. Return 0 if no profit is possible.',example:'maxProfit([7,1,5,3,6,4])  →  5  (buy at 1, sell at 6)\nmaxProfit([7,6,4,3,1])    →  0  (prices only fall)\nmaxProfit([1,2])           →  1',hint:'Track the minimum price seen so far. For each price, calculate profit = price - minSoFar. Keep track of maximum profit.',constraints:['Method named maxProfit','Return 0 if no profit possible','One buy, one sell only'],starter:'int maxProfit(int[] prices) {\n    // Return maximum profit from one buy+sell\n    \n}',tests:[{i:[[7,1,5,3,6,4]],e:5,d:'[7,1,5,3,6,4]'},{i:[[7,6,4,3,1]],e:0,d:'only falling'},{i:[[1,2]],e:1,d:'[1,2]'},{i:[[2,4,1,7]],e:6,d:'[2,4,1,7]'}],fn:'maxProfit',lang:'java'},
+{title:'The Recursion Hydra',diff:'HARD',xp:280,task:'Write a method `factorial` that returns the factorial of n (n!) using recursion. factorial(0) is 1.',example:'factorial(0)  →  1\nfactorial(1)  →  1\nfactorial(5)  →  120\nfactorial(6)  →  720',hint:'Base case: if n <= 1 return 1. Recursive case: return n * factorial(n-1).',constraints:['Method named factorial','Must use recursion','factorial(0) == 1'],starter:'int factorial(int n) {\n    // Return n! using recursion\n    \n}',tests:[{i:[0],e:1,d:'factorial(0)'},{i:[1],e:1,d:'factorial(1)'},{i:[5],e:120,d:'factorial(5)'},{i:[6],e:720,d:'factorial(6)'}],fn:'factorial',lang:'java'},
+{title:'The Memory Wraith',diff:'HARD',xp:300,task:'Write a method `twoSum` that takes an integer array and a target, and returns the indices [i,j] (i<j) where arr[i]+arr[j]==target. Return [-1,-1] if no solution.',example:'twoSum([2,7,11,15], 9)  →  [0,1]\ntwoSum([3,2,4], 6)       →  [1,2]\ntwoSum([1,2,3], 100)     →  [-1,-1]',hint:'Use a HashMap<Integer,Integer> mapping value to index as you iterate, checking if (target - current) was seen before.',constraints:['Method named twoSum','Return [-1,-1] if no pair found','i < j always','O(n) preferred using a HashMap'],starter:'int[] twoSum(int[] arr, int target) {\n    // Return [i,j] where arr[i]+arr[j]==target\n    \n}',tests:[{i:[[2,7,11,15],9],e:[0,1],d:'[2,7,11,15], target=9'},{i:[[3,2,4],6],e:[1,2],d:'[3,2,4], target=6'},{i:[[1,2,3],100],e:[-1,-1],d:'no solution'},{i:[[3,3],6],e:[0,1],d:'duplicate values'}],fn:'twoSum',lang:'java'}
+]},
+php:{id:'php',name:'PHP',short:'PHP',icon:'🐘',color:'#c084fc',desc:'Delve into the Server Sanctum',levels:[
+{title:'The Array Altar',diff:'EASY',xp:80,task:'Print "Hello, World!" to the output.\n\nThen on the next line, print your name using a variable.\n\nExpected output:\nHello, World!\nMy name is Eliner',example:'Expected output:\nHello, World!\nMy name is Eliner',hint:'Use echo twice. Store your name in a $name variable first. Each echo should end with "\\n" or PHP_EOL.',constraints:['Print Hello, World! first','Print name on second line using a variable','Use a $name variable'],starter:'<?php\n$name = "Eliner"; // change this\n\n// your code here\n',tests:[{i:[],e:'Hello, World!\nMy name is Eliner',d:'Hello World + name output'}],fn:'__output__',lang:'php'},
+{title:'The String Sanctum',diff:'EASY',xp:100,task:'Write a function `reverse_words` that takes a sentence string and returns it with the words reversed in order.',example:'reverse_words("Hello World")    →  "World Hello"\nreverse_words("I love PHP")     →  "PHP love I"\nreverse_words("one")            →  "one"',hint:'Use explode(" ", $str) to split, array_reverse() to flip, then implode(" ", ...) to rejoin.',constraints:['Function named reverse_words','Words separated by single spaces','Returns single word unchanged'],starter:'function reverse_words($str) {\n    // Return sentence with words in reverse order\n    \n}',tests:[{i:['Hello World'],e:'World Hello',d:'"Hello World"'},{i:['I love PHP'],e:'PHP love I',d:'"I love PHP"'},{i:['one'],e:'one',d:'single word'},{i:['a b c d'],e:'d c b a',d:'four words'}],fn:'reverse_words',lang:'php'},
+{title:'The Regex Ruins',diff:'MEDIUM',xp:140,task:'Write a function `count_vowels` that takes a string and returns the count of vowels (a,e,i,o,u — case insensitive).',example:'count_vowels("Hello World")  →  3\ncount_vowels("rhythm")       →  0\ncount_vowels("AEIOU")        →  5',hint:'Use strtolower() and loop through checking if each char is in "aeiou".',constraints:['Function named count_vowels','Case insensitive','Only a,e,i,o,u count'],starter:'function count_vowels($str) {\n    // Return count of vowels (a,e,i,o,u) in str\n    \n}',tests:[{i:['Hello World'],e:3,d:'"Hello World"'},{i:['rhythm'],e:0,d:'no vowels'},{i:['AEIOU'],e:5,d:'all caps vowels'},{i:[''],e:0,d:'empty'}],fn:'count_vowels',lang:'php'},
+{title:'The OOP Obelisk',diff:'MEDIUM',xp:180,task:'Write a function `flatten_array` that takes a nested array (any depth) and returns a completely flat array with all values.',example:'flatten_array([1,[2,3],[4,[5,6]]])  →  [1,2,3,4,5,6]\nflatten_array([[1],[2],[3]])          →  [1,2,3]',hint:'Use recursion: loop through elements; if an element is an array, recursively flatten it.',constraints:['Function named flatten_array','Works for any nesting depth','Preserves value order'],starter:'function flatten_array($arr) {\n    // Return flat array from nested input\n    \n}',tests:[{i:[[[1,[2,3],[4,[5,6]]]]],e:[1,2,3,4,5,6],d:'nested array'},{i:[[[[1],[2],[3]]]],e:[1,2,3],d:'one level nested'},{i:[[[1,2,3]]],e:[1,2,3],d:'already flat'}],fn:'flatten_array',lang:'php'},
+{title:'The Server Overlord',diff:'HARD',xp:250,task:'Write a function `group_by_first_letter` that takes an array of strings and returns an associative array grouping words by their first letter (lowercase).',example:'group_by_first_letter(["apple","ant","banana","avocado","blueberry"])\n→ ["a"=>["apple","ant","avocado"], "b"=>["banana","blueberry"]]',hint:'Loop through words, use strtolower($word[0]) as the key, append to that key\'s array.',constraints:['Function named group_by_first_letter','Keys are lowercase letters','Values are arrays of words','Preserve original case of words'],starter:'function group_by_first_letter($words) {\n    // Group words by their first letter\n    \n}',tests:[{i:[['apple','ant','banana','avocado','blueberry']],e:{a:['apple','ant','avocado'],b:['banana','blueberry']},d:'apple,ant,banana,avocado,blueberry'},{i:[['cat','cow','dog']],e:{c:['cat','cow'],d:['dog']},d:'cat,cow,dog'},{i:[['zoo']],e:{z:['zoo']},d:'single word'}],fn:'group_by_first_letter',lang:'php'},
+{title:'The Recursion Hydra',diff:'HARD',xp:280,task:'Write a function `factorial` that returns the factorial of n (n!) using recursion. factorial(0) is 1.',example:'factorial(0)  →  1\nfactorial(1)  →  1\nfactorial(5)  →  120\nfactorial(6)  →  720',hint:'Base case: if n <= 1 return 1. Recursive case: return n * factorial(n-1).',constraints:['Function named factorial','Must use recursion','factorial(0) == 1'],starter:'function factorial($n) {\n    // Return n! using recursion\n    \n}',tests:[{i:[0],e:1,d:'factorial(0)'},{i:[1],e:1,d:'factorial(1)'},{i:[5],e:120,d:'factorial(5)'},{i:[6],e:720,d:'factorial(6)'}],fn:'factorial',lang:'php'},
+{title:'The Memory Wraith',diff:'HARD',xp:300,task:'Write a function `two_sum` that takes an array of integers and a target, and returns the indices [i,j] (i<j) where arr[i]+arr[j]==target. Return [-1,-1] if no solution.',example:'two_sum([2,7,11,15], 9)  →  [0,1]\ntwo_sum([3,2,4], 6)       →  [1,2]\ntwo_sum([1,2,3], 100)     →  [-1,-1]',hint:'Use an associative array mapping value to index as you iterate, checking if (target - current) was seen before.',constraints:['Function named two_sum','Return [-1,-1] if no pair found','i < j always','O(n) preferred using a map'],starter:'function two_sum($arr, $target) {\n    // Return [i,j] where arr[i]+arr[j]==target\n    \n}',tests:[{i:[[2,7,11,15],9],e:[0,1],d:'[2,7,11,15], target=9'},{i:[[3,2,4],6],e:[1,2],d:'[3,2,4], target=6'},{i:[[1,2,3],100],e:[-1,-1],d:'no solution'},{i:[[3,3],6],e:[0,1],d:'duplicate values'}],fn:'two_sum',lang:'php'}
+]}};
+
+// ════════════════════════════════════════════════════════════
+// MULTIPLE CHOICE QUESTION BANK (3 per level, indexed by [lang][levelIdx])
+// ════════════════════════════════════════════════════════════
+const MCQ_DATA={
+javascript:[
+ [{q:'In JavaScript, which keyword is used to print output to the console?',o:['echo','print','console.log','printf'],a:2,e:'console.log() is the standard way to print output in JavaScript.'},
+  {q:'How do you declare a variable that should not be reassigned?',o:['var','let','const','static'],a:2,e:'const creates a constant binding that cannot be reassigned.'},
+  {q:'What does a template literal use for variable interpolation?',o:['%s','${expr}','#{expr}','{{expr}}'],a:1,e:'Template literals use backticks and ${expr} to embed expressions.'}],
+ [{q:'Which array method adds an element to the end?',o:['push()','pop()','shift()','unshift()'],a:0,e:'push() appends an element to the end of an array.'},
+  {q:'What does Array.reduce() do?',o:['Filters elements','Sorts the array','Accumulates values into a single result','Reverses the array'],a:2,e:'reduce() applies a function against an accumulator to reduce the array to a single value.'},
+  {q:'What is the result of [1,2,3].length?',o:['2','3','4','undefined'],a:1,e:'.length returns the number of elements in the array, which is 3.'}],
+ [{q:'What is the result of 15 % 3?',o:['5','0','3','1'],a:1,e:'15 divided by 3 is exactly 5 with remainder 0, so 15 % 3 === 0.'},
+  {q:'Which operator checks both value AND type equality?',o:['==','=','===','!='],a:2,e:'=== is strict equality, checking type and value without coercion.'},
+  {q:'In an if/else if/else chain, when does the else block run?',o:['Always','When all conditions are false','Only with numbers','Never'],a:1,e:'The else block executes only if none of the preceding conditions were true.'}],
+ [{q:'What does [...new Set(arr)] do to an array?',o:['Sorts it','Removes duplicates','Reverses it','Doubles values'],a:1,e:'A Set only stores unique values, so spreading it removes duplicates.'},
+  {q:'Which method creates a new array by transforming each element?',o:['forEach()','map()','filter()','find()'],a:1,e:'map() returns a new array with the results of calling a function on every element.'},
+  {q:'Does Array.filter() modify the original array?',o:['Yes, always','No, it returns a new array','Only with numbers','Only if empty'],a:1,e:'filter() returns a new array; the original array is left unchanged.'}],
+ [{q:'What does the string method .toLowerCase() do?',o:['Removes spaces','Converts to lowercase','Reverses string','Capitalizes first letter'],a:1,e:'.toLowerCase() converts all characters in a string to lowercase.'},
+  {q:'How can you reverse a string in JavaScript?',o:['str.reverse()','str.split("").reverse().join("")','str.flip()','reverse(str)'],a:1,e:'Strings have no reverse() method, so split into chars, reverse the array, then join.'},
+  {q:'What does /[^a-z0-9]/gi match?',o:['Only letters','Only digits','Any non-alphanumeric character','Whitespace only'],a:2,e:'The ^ inside [] negates the set, so this matches any character that is NOT a letter or digit.'}],
+ [{q:'What is the base case in factorial(n) recursion?',o:['n === 100','n <= 1 returns 1','n is negative','There is no base case'],a:1,e:'When n <= 1, factorial returns 1 — this stops the recursion from continuing forever.'},
+  {q:'What does factorial(5) compute?',o:['5+4+3+2+1','5*4*3*2*1','5^5','5/4/3/2/1'],a:1,e:'factorial(5) = 5 × 4 × 3 × 2 × 1 = 120.'},
+  {q:'What happens if a recursive function has no base case?',o:['It runs once','Infinite recursion / stack overflow','It returns undefined','It runs faster'],a:1,e:'Without a base case, the function calls itself forever, causing a stack overflow.'}],
+ [{q:'What JavaScript data structure gives O(1) average lookup by key?',o:['Array','Map','Stack','LinkedList'],a:1,e:'Map (or plain object) provides near O(1) average-time key lookups.'},
+  {q:'In twoSum, what do you store in the Map as you iterate?',o:['The target value','value → index pairs','Only indices','Nothing'],a:1,e:'Storing value→index lets you instantly check if the complement (target-current) was seen before.'},
+  {q:'For twoSum([3,3], 6), what is the expected result?',o:['[-1,-1]','[0,0]','[0,1]','[1,1]'],a:2,e:'Indices 0 and 1 both hold value 3, and 3+3=6, with i<j satisfied by [0,1].'}]
+],
+python:[
+ [{q:'In Python, which function prints output to the console?',o:['echo()','print()','console.log()','write()'],a:1,e:'print() is the built-in function for displaying output in Python.'},
+  {q:'What symbol does Python use to define code blocks?',o:['Curly braces {}','Indentation','Square brackets []','Semicolons'],a:1,e:'Python uses indentation (whitespace) to define code blocks instead of braces.'},
+  {q:'What is the correct way to create an f-string?',o:['f"Hello {name}"','"Hello %name"','format("Hello", name)','$"Hello {name}"'],a:0,e:'f-strings begin with f and embed expressions using curly braces {}.'}],
+ [{q:'Which Python data type is immutable?',o:['list','dict','tuple','set'],a:2,e:'Tuples cannot be modified after creation, making them immutable.'},
+  {q:'What does s[::-1] do to a string s?',o:['Removes spaces','Reverses the string','Uppercases it','Returns length'],a:1,e:'The slice [::-1] steps backward through the string, reversing it.'},
+  {q:'What is the syntax for a list comprehension that filters even numbers?',o:['[x for x in lst if x%2==0]','[x in lst where x%2==0]','filter(x%2==0, lst)','for x in lst: if x%2==0'],a:0,e:'List comprehensions use [expr for item in iterable if condition].'}],
+ [{q:'Which data structure uses key-value pairs in Python?',o:['list','tuple','dict','set'],a:2,e:'A dict (dictionary) stores data as key-value pairs.'},
+  {q:'What does enumerate() return when looping over a list?',o:['Sorted values','Index-value pairs','Only indices','Reversed list'],a:1,e:'enumerate() yields (index, value) tuples for each item.'},
+  {q:'How do you check if a key exists in a dict d?',o:['d.has(key)','key in d','d.contains(key)','d.exists(key)'],a:1,e:'The `in` operator checks for key membership in a dictionary.'}],
+ [{q:'What is the base case for fibonacci(0) and fibonacci(1)?',o:['0 and 1','1 and 1','0 and 0','1 and 0'],a:0,e:'By definition, fib(0)=0 and fib(1)=1.'},
+  {q:'What keyword is used to define a function in Python?',o:['function','def','func','lambda'],a:1,e:'def is used to define functions in Python.'},
+  {q:'Which approach to fibonacci avoids redundant recursive calls?',o:['Recursive only','Iterative with two variables','Using print()','Using strings'],a:1,e:'An iterative approach with two tracking variables computes fibonacci in O(n) without recomputation.'}],
+ [{q:'What data structure is commonly used to check balanced brackets?',o:['Queue','Stack','Dictionary','Set'],a:1,e:'A stack (LIFO) is ideal for matching nested brackets — push openers, pop on closers.'},
+  {q:'In Python, how do you add an item to the end of a list called stack?',o:['stack.push(x)','stack.append(x)','stack.add(x)','stack.insert(x)'],a:1,e:'Lists use .append() to add an element to the end.'},
+  {q:'What should is_balanced("") return?',o:['False','None','True','Error'],a:2,e:'An empty string has no unmatched brackets, so it is considered balanced (True).'}],
+ [{q:'What is the base case in factorial(n) recursion?',o:['n == 100','n <= 1 returns 1','n is negative','There is no base case'],a:1,e:'When n <= 1, factorial returns 1 — this stops the recursion.'},
+  {q:'What does factorial(5) compute?',o:['5+4+3+2+1','5*4*3*2*1','5**5','5/4/3/2/1'],a:1,e:'factorial(5) = 5 × 4 × 3 × 2 × 1 = 120.'},
+  {q:'What happens if a recursive function never reaches its base case?',o:['It runs once','RecursionError / stack overflow','It returns 0','It runs faster'],a:1,e:'Without reaching a base case, Python raises a RecursionError from infinite recursion.'}],
+ [{q:'What Python data structure gives O(1) average lookup by key?',o:['list','dict','tuple','set of tuples'],a:1,e:'dict provides near O(1) average-time key lookups via hashing.'},
+  {q:'In two_sum, what do you store in the dict as you iterate?',o:['The target value','value → index pairs','Only indices','Nothing'],a:1,e:'Storing value→index lets you instantly check if the complement (target-current) was seen before.'},
+  {q:'For two_sum([3,3], 6), what is the expected result?',o:['[-1,-1]','[0,0]','[0,1]','[1,1]'],a:2,e:'Indices 0 and 1 both hold value 3, and 3+3=6, with i<j satisfied by [0,1].'}]
+],
+cpp:[
+ [{q:'Which C++ stream is used to print to the console?',o:['cin','cout','cerr only','printf only'],a:1,e:'cout (character output) is the standard stream for console output, used with <<.'},
+  {q:'Which header is needed for cout and cin?',o:['<stdio.h>','<iostream>','<string>','<vector>'],a:1,e:'<iostream> provides the standard input/output stream objects.'},
+  {q:'What does endl do in C++?',o:['Ends the program','Inserts a newline and flushes the buffer','Declares a variable','Closes a file'],a:1,e:'endl inserts a newline character and flushes the output buffer.'}],
+ [{q:'What does a for loop with int i=0; i<n; i++ do?',o:['Loops forever','Loops n times from 0 to n-1','Loops once','Loops backward'],a:1,e:'This is a standard counting loop that iterates n times.'},
+  {q:'How do you compare two values in an if statement?',o:['=','==','equals()','is'],a:1,e:'== is the equality comparison operator in C++.'},
+  {q:'What does the int data type represent?',o:['Decimal numbers','Whole numbers','Text','True/false'],a:1,e:'int represents whole (integer) numbers in C++.'}],
+ [{q:'A number is NOT prime if it is divisible by any number other than 1 and itself. Is 1 prime?',o:['Yes','No','Sometimes','Only if even'],a:1,e:'By definition, 1 is not considered a prime number.'},
+  {q:'Up to what value do you need to check divisors for primality testing?',o:['n','n/2','sqrt(n)','n*n'],a:2,e:'Checking divisors up to sqrt(n) is sufficient and efficient for primality testing.'},
+  {q:'What does the bool type represent?',o:['A character','true or false','A decimal','An array'],a:1,e:'bool stores a boolean value: true or false.'}],
+ [{q:'What is a vector in C++?',o:['A fixed-size array','A dynamic resizable array','A linked list only','A string type'],a:1,e:'std::vector is a dynamic array that can grow and shrink at runtime.'},
+  {q:'Which method adds an element to the end of a vector?',o:['add()','push_back()','append()','insert_end()'],a:1,e:'push_back() adds an element to the end of a vector.'},
+  {q:'What does .size() return for a vector?',o:['The capacity','The number of elements','The first element','Memory address'],a:1,e:'.size() returns the current number of elements in the vector.'}],
+ [{q:'What container provides O(1) average lookup time for membership testing?',o:['vector','unordered_set','list','array'],a:1,e:'unordered_set uses hashing for average O(1) insertion and lookup.'},
+  {q:'In a consecutive sequence problem, how do you know a number starts a sequence?',o:['It is even','num-1 is not in the set','It is the first element','It is negative'],a:1,e:'If num-1 is not present, num must be the start of a consecutive run.'},
+  {q:'What is the time complexity goal for longestConsecutive using a hash set?',o:['O(n^2)','O(log n)','O(n)','O(1)'],a:2,e:'Using a hash set allows an O(n) solution by avoiding nested loops.'}],
+ [{q:'What is the base case in factorial(n) recursion?',o:['n == 100','n <= 1 returns 1','n is negative','There is no base case'],a:1,e:'When n <= 1, factorial returns 1 — this stops the recursion.'},
+  {q:'What does factorial(5) compute?',o:['5+4+3+2+1','5*4*3*2*1','5^5','5/4/3/2/1'],a:1,e:'factorial(5) = 5 × 4 × 3 × 2 × 1 = 120.'},
+  {q:'What happens in C++ if recursion never hits its base case?',o:['Compile error','Stack overflow at runtime','Returns 0','Runs faster'],a:1,e:'Unbounded recursion exhausts the call stack, causing a stack overflow / crash.'}],
+ [{q:'Which C++ container provides O(1) average key lookup?',o:['vector','unordered_map','list','array'],a:1,e:'unordered_map uses hashing for average O(1) key lookups.'},
+  {q:'In twoSum, what do you store in the unordered_map as you iterate?',o:['The target value','value → index pairs','Only indices','Nothing'],a:1,e:'Storing value→index lets you instantly check if the complement (target-current) was seen before.'},
+  {q:'For twoSum({3,3}, 6), what is the expected result?',o:['{-1,-1}','{0,0}','{0,1}','{1,1}'],a:2,e:'Indices 0 and 1 both hold value 3, and 3+3=6, with i<j satisfied by {0,1}.'}]
+],
+csharp:[
+ [{q:'Which method prints a line of output in C#?',o:['print()','Console.WriteLine()','echo()','System.print()'],a:1,e:'Console.WriteLine() writes text followed by a newline to the console.'},
+  {q:'Which keyword declares the entry point method in a C# console app?',o:['Start','Main','Run','Init'],a:1,e:'static void Main is the conventional entry point for C# console applications.'},
+  {q:'What type is used to store text in C#?',o:['int','string','char[] only','bool'],a:1,e:'string is the standard type for text in C#.'}],
+ [{q:'Which vowels are typically counted: a, e, i, o, u — what about "y"?',o:['Always counted','Never counted in basic vowel checks','Counted only uppercase','Counted only at start'],a:1,e:'"y" is usually NOT counted as a vowel in basic vowel-counting problems.'},
+  {q:'What does .ToLower() do to a string?',o:['Reverses it','Converts to lowercase','Removes vowels','Counts characters'],a:1,e:'.ToLower() converts all characters of a string to lowercase.'},
+  {q:'How would you split a sentence into words in C#?',o:['.Split(\' \')','.Divide(\' \')','.Words()','.Tokenize()'],a:0,e:'.Split(\' \') splits a string into an array using the space character as delimiter.'}],
+ [{q:'What makes a string a palindrome?',o:['It contains numbers','It reads the same forwards and backwards','It has no vowels','It is uppercase'],a:1,e:'A palindrome reads identically forwards and backwards.'},
+  {q:'Which C# method checks if a character is a letter or digit?',o:['char.IsLetterOrDigit()','char.IsValid()','string.IsAlphaNumeric()','char.Check()'],a:0,e:'char.IsLetterOrDigit() returns true for alphanumeric characters.'},
+  {q:'Why convert a string to lowercase before checking if it is a palindrome?',o:['To save memory','To make the check case-insensitive','It is required by C#','To reverse it faster'],a:1,e:'Lowercasing ensures "Racecar" and "racecar" are treated the same.'}],
+ [{q:'What C# collection maps keys to values?',o:['List<T>','Dictionary<K,V>','Array','Stack<T>'],a:1,e:'Dictionary<K,V> stores key-value pairs for fast lookup by key.'},
+  {q:'In TwoSum, what should be returned if no pair sums to target?',o:['null','an empty array','[-1,-1]','0'],a:2,e:'The convention here is to return [-1,-1] to indicate no valid pair was found.'},
+  {q:'Why use a Dictionary in TwoSum instead of nested loops?',o:['It looks nicer','O(n) instead of O(n^2) lookup','It sorts automatically','It uses less code'],a:1,e:'A Dictionary gives O(1) average lookups, turning an O(n^2) brute force into O(n).'}],
+ [{q:'What is the "sliding window" technique used for?',o:['Sorting arrays','Finding substrings/subarrays efficiently','Printing output','Declaring variables'],a:1,e:'Sliding window maintains a moving range over data to solve substring/subarray problems efficiently.'},
+  {q:'What data structure helps track characters seen in the current window?',o:['Stack','HashSet','Array of size 2','Queue only'],a:1,e:'A HashSet quickly tells you if a character is already in the current window.'},
+  {q:'For "bbbbb", what is the longest substring without repeating characters?',o:['0','1','5','b'],a:1,e:'Only a single "b" can be in the window at a time, so the answer is 1.'}],
+ [{q:'What is the base case in Factorial(n) recursion?',o:['n == 100','n <= 1 returns 1','n is negative','There is no base case'],a:1,e:'When n <= 1, Factorial returns 1 — this stops the recursion.'},
+  {q:'What does Factorial(5) compute?',o:['5+4+3+2+1','5*4*3*2*1','5^5','5/4/3/2/1'],a:1,e:'Factorial(5) = 5 × 4 × 3 × 2 × 1 = 120.'},
+  {q:'What happens in C# if recursion never hits its base case?',o:['Compile error','StackOverflowException','Returns 0','Runs faster'],a:1,e:'Unbounded recursion exhausts the call stack, causing a StackOverflowException.'}],
+ [{q:'Which C# collection gives O(1) average key lookup?',o:['List<T>','Dictionary<K,V>','array','Stack<T>'],a:1,e:'Dictionary<K,V> provides near O(1) average-time key lookups via hashing.'},
+  {q:'In TwoSumIdx, what do you store in the Dictionary as you iterate?',o:['The target value','value → index pairs','Only indices','Nothing'],a:1,e:'Storing value→index lets you instantly check if the complement (target-current) was seen before.'},
+  {q:'For TwoSumIdx([3,3], 6), what is the expected result?',o:['[-1,-1]','[0,0]','[0,1]','[1,1]'],a:2,e:'Indices 0 and 1 both hold value 3, and 3+3=6, with i<j satisfied by [0,1].'}]
+],
+java:[
+ [{q:'Which statement prints a line in Java?',o:['print()','System.out.println()','console.write()','echo()'],a:1,e:'System.out.println() prints text followed by a newline to standard output.'},
+  {q:'What is the entry point method signature in Java?',o:['void main()','public static void main(String[] args)','static main()','int main()'],a:1,e:'public static void main(String[] args) is the standard Java entry point.'},
+  {q:'What type is used for text in Java?',o:['char','String','text','varchar'],a:1,e:'String is the class used to represent text in Java.'}],
+ [{q:'What defines an anagram?',o:['Same length only','Same letters rearranged','Same first letter','Same vowels only'],a:1,e:'An anagram uses exactly the same letters as another word, just rearranged.'},
+  {q:'What is the time complexity of binary search on a sorted array?',o:['O(n)','O(n^2)','O(log n)','O(1)'],a:2,e:'Binary search halves the search space each step, giving O(log n).'},
+  {q:'What is required for binary search to work correctly?',o:['Array must be sorted','Array must be empty','Array must have duplicates','Array must be 2D'],a:0,e:'Binary search relies on the array being sorted to eliminate halves correctly.'}],
+ [{q:'What data structure follows Last-In-First-Out (LIFO) order?',o:['Queue','Stack','Array','Dictionary'],a:1,e:'A Stack is LIFO — the last element pushed is the first popped.'},
+  {q:'For validateBrackets, what should happen when a closing bracket is found but the stack is empty?',o:['Push it anyway','Return true immediately','Return false (invalid)','Ignore it'],a:2,e:'A closing bracket with nothing to match means the brackets are invalid.'},
+  {q:'Should validateBrackets("") return true or false?',o:['true','false','null','throws error'],a:0,e:'An empty string has no mismatched brackets, so it is valid (true).'}],
+ [{q:'When merging two sorted arrays, what technique is commonly used?',o:['Recursion only','Two pointers','Random sampling','Binary search only'],a:1,e:'Two pointers, one per array, advance by comparing current elements to build the merged result.'},
+  {q:'If one array is empty, what should mergeSortedArrays return?',o:['An empty array','null','The other array\'s elements in order','Throws error'],a:2,e:'Merging with an empty array just returns the contents of the non-empty array, in order.'},
+  {q:'Why avoid using Arrays.sort() on the merged result?',o:['It is slower and unnecessary since inputs are already sorted','It does not exist in Java','It only works on Strings','It removes duplicates'],a:0,e:'Since both inputs are sorted, a merge can build the sorted result directly without re-sorting.'}],
+ [{q:'In maxProfit, what do you track as you iterate through prices?',o:['The maximum price seen','The minimum price seen so far','The average price','The last price only'],a:1,e:'Tracking the minimum price so far lets you compute potential profit at each step.'},
+  {q:'If prices only decrease, what should maxProfit return?',o:['A negative number','0','The first price','null'],a:1,e:'If no profitable transaction exists, the answer is 0 (no transaction).'},
+  {q:'How many buy/sell transactions does this version of maxProfit allow?',o:['Unlimited','Exactly one buy and one sell','Two buys','Zero'],a:1,e:'This is the single-transaction version: one buy followed by one later sell.'}],
+ [{q:'What is the base case in factorial(n) recursion?',o:['n == 100','n <= 1 returns 1','n is negative','There is no base case'],a:1,e:'When n <= 1, factorial returns 1 — this stops the recursion.'},
+  {q:'What does factorial(5) compute?',o:['5+4+3+2+1','5*4*3*2*1','5^5','5/4/3/2/1'],a:1,e:'factorial(5) = 5 × 4 × 3 × 2 × 1 = 120.'},
+  {q:'What happens in Java if recursion never hits its base case?',o:['Compile error','StackOverflowError','Returns 0','Runs faster'],a:1,e:'Unbounded recursion exhausts the call stack, throwing a StackOverflowError.'}],
+ [{q:'Which Java collection gives O(1) average key lookup?',o:['ArrayList','HashMap','LinkedList','Stack'],a:1,e:'HashMap provides near O(1) average-time key lookups via hashing.'},
+  {q:'In twoSum, what do you store in the HashMap as you iterate?',o:['The target value','value → index pairs','Only indices','Nothing'],a:1,e:'Storing value→index lets you instantly check if the complement (target-current) was seen before.'},
+  {q:'For twoSum([3,3], 6), what is the expected result?',o:['[-1,-1]','[0,0]','[0,1]','[1,1]'],a:2,e:'Indices 0 and 1 both hold value 3, and 3+3=6, with i<j satisfied by [0,1].'}]
+],
+php:[
+ [{q:'Which statement outputs text in PHP?',o:['print_r only','echo','console.log','System.out'],a:1,e:'echo is the standard language construct for outputting text in PHP.'},
+  {q:'How do PHP variables begin?',o:['With @','With $','With #','With &'],a:1,e:'All PHP variables are prefixed with the $ symbol.'},
+  {q:'What does PHP_EOL represent?',o:['End of file','A platform-appropriate newline','A PHP error','End of loop'],a:1,e:'PHP_EOL is a constant for the newline character(s) appropriate to the OS.'}],
+ [{q:'Which function splits a string into an array by a delimiter?',o:['explode()','split()','implode()','divide()'],a:0,e:'explode(delimiter, string) splits a string into an array of substrings.'},
+  {q:'Which function joins array elements into a string?',o:['explode()','join_all()','implode()','concat()'],a:2,e:'implode(glue, array) joins array elements into a single string.'},
+  {q:'What does array_reverse() do?',o:['Sorts ascending','Reverses the order of array elements','Removes duplicates','Counts elements'],a:1,e:'array_reverse() returns an array with elements in reverse order.'}],
+ [{q:'Which function converts a string to lowercase in PHP?',o:['strtolower()','lower()','toLowerCase()','lcase()'],a:0,e:'strtolower() converts all characters in a string to lowercase.'},
+  {q:'How would you count characters that are vowels in a loop?',o:['Compare each char against "aeiou"','Use array_sum()','Use count()','Use array_keys()'],a:0,e:'Loop through characters and check membership in the string "aeiou" (after lowercasing).'},
+  {q:'What does strlen() return?',o:['First character','Length of a string','Last character','Array of characters'],a:1,e:'strlen() returns the number of characters (bytes) in a string.'}],
+ [{q:'How do you check if a PHP variable is an array?',o:['is_array()','array_check()','typeof()','isset_array()'],a:0,e:'is_array() returns true if the variable is an array.'},
+  {q:'What approach handles arbitrarily nested arrays?',o:['A single for loop','Recursion','Sorting first','Using strlen()'],a:1,e:'Recursion naturally handles any depth of nesting by calling itself on sub-arrays.'},
+  {q:'In flatten_array, what should happen when an element is itself an array?',o:['Skip it','Recursively flatten and merge its values','Throw an error','Convert to string'],a:1,e:'Recursively flatten nested arrays and merge their results into the output.'}],
+ [{q:'How do you access the first character of a PHP string $word?',o:['$word[0]','$word.first()','first($word)','$word->0'],a:0,e:'PHP strings support array-like indexing, so $word[0] gives the first character.'},
+  {q:'What PHP structure is best for grouping items by a key?',o:['A simple variable','An associative array','A boolean','An integer'],a:1,e:'Associative arrays (key=>value) are ideal for grouping related items under keys.'},
+  {q:'If a key does not yet exist in an associative array, what must you do before appending?',o:['Nothing, PHP handles it with []','Manually throw an error','Convert to JSON first','Use strlen()'],a:0,e:'PHP auto-creates arrays on first use with $arr[$key][] = $value syntax.'}],
+ [{q:'What is the base case in factorial($n) recursion?',o:['$n == 100','$n <= 1 returns 1','$n is negative','There is no base case'],a:1,e:'When $n <= 1, factorial returns 1 — this stops the recursion.'},
+  {q:'What does factorial(5) compute?',o:['5+4+3+2+1','5*4*3*2*1','5^5','5/4/3/2/1'],a:1,e:'factorial(5) = 5 × 4 × 3 × 2 × 1 = 120.'},
+  {q:'What happens in PHP if recursion never hits its base case?',o:['Compile error','Fatal error: max nesting level reached','Returns 0','Runs faster'],a:1,e:'PHP enforces a recursion/nesting limit and throws a fatal error when exceeded.'}],
+ [{q:'Which PHP structure gives fast key lookup similar to a hash map?',o:['Indexed array only','Associative array','String','Boolean'],a:1,e:'PHP associative arrays use hashing internally for fast key lookups.'},
+  {q:'In two_sum, what do you store in the associative array as you iterate?',o:['The target value','value → index pairs','Only indices','Nothing'],a:1,e:'Storing value→index lets you instantly check if the complement (target-current) was seen before.'},
+  {q:'For two_sum([3,3], 6), what is the expected result?',o:['[-1,-1]','[0,0]','[0,1]','[1,1]'],a:2,e:'Indices 0 and 1 both hold value 3, and 3+3=6, with i<j satisfied by [0,1].'}]
+]};
+</script>
+<script>
+// ════════════════════════════════════════════════════════════
+// GAME STATE
+// ════════════════════════════════════════════════════════════
+const state={lang:null,levelIdx:0,lives:3,score:0,streak:0,bestStreak:0,totalXP:0,solved:0,attempted:0,timerInterval:null,timeLeft:0,progress:{},char:null};
+
+function loadProgress(){try{const p=localStorage.getItem('cqa_v2');if(p)state.progress=JSON.parse(p);}catch(e){}}
+function saveProgress(lid,li,ok){if(!state.progress[lid])state.progress[lid]=[];state.progress[lid][li]=ok;try{localStorage.setItem('cqa_v2',JSON.stringify(state.progress));}catch(e){}}
+
+// ════════════════════════════════════════════════════════════
+// CHARACTER CUSTOMIZATION
+// ════════════════════════════════════════════════════════════
+const CLASSES=[
+  {id:'warrior',name:'Warrior',icon:'⚔️',tag:'Balanced',stats:{atk:7,def:6,spd:5}},
+  {id:'mage',name:'Mage',icon:'🔮',tag:'Spellcaster',stats:{atk:9,def:3,spd:5}},
+  {id:'rogue',name:'Rogue',icon:'🗡️',tag:'Swift',stats:{atk:6,def:4,spd:9}},
+  {id:'archer',name:'Archer',icon:'🏹',tag:'Ranged',stats:{atk:8,def:4,spd:7}},
+  {id:'knight',name:'Knight',icon:'🛡️',tag:'Tank',stats:{atk:5,def:9,spd:3}},
+  {id:'necromancer',name:'Necromancer',icon:'💀',tag:'Dark Arts',stats:{atk:8,def:5,spd:4}},
+];
+const SWATCHES=['#3b82f6','#ef4444','#22c55e','#f5c842','#a855f7','#f97316','#06b6d4','#ec4899','#94a3b8','#1e293b'];
+const ACCESSORIES=[
+  {id:'none',icon:'—',name:'None'},
+  {id:'cape',icon:'🧣',name:'Cape'},
+  {id:'shield',icon:'🛡',name:'Shield'},
+  {id:'wings',icon:'🪽',name:'Wings'},
+  {id:'crown',icon:'👑',name:'Crown'},
+];
+const DEFAULT_CHAR={name:'Eliner',cls:'warrior',color:'#3b82f6',acc:'none'};
+
+function loadChar(){
+  try{const c=localStorage.getItem('cqa_char');if(c)state.char={...DEFAULT_CHAR,...JSON.parse(c)};else state.char={...DEFAULT_CHAR};}
+  catch(e){state.char={...DEFAULT_CHAR};}
+}
+function saveChar(){try{localStorage.setItem('cqa_char',JSON.stringify(state.char));}catch(e){}}
+
+function openCharScreen(){
+  buildCharScreen();
+  showScreen('s-char');
+}
+
+function buildCharScreen(){
+  const ch=state.char;
+  document.getElementById('char-name-input').value=ch.name;
+  document.getElementById('char-name-display').textContent=ch.name;
+  renderCharPreview();
+
+  // Class grid
+  const cg=document.getElementById('class-grid');cg.innerHTML='';
+  CLASSES.forEach(c=>{
+    const card=document.createElement('div');
+    card.className='class-card'+(ch.cls===c.id?' active':'');
+    card.innerHTML=`<span class="class-icon">${c.icon}</span><span class="class-name">${c.name}</span><span class="class-tag">${c.tag}</span>`;
+    card.onclick=()=>{ch.cls=c.id;buildCharScreen();};
+    cg.appendChild(card);
+  });
+
+  // Color swatches
+  const cr=document.getElementById('color-row');cr.innerHTML='';
+  SWATCHES.forEach(col=>{
+    const sw=document.createElement('div');
+    sw.className='swatch'+(ch.color===col?' active':'');
+    sw.style.background=col;sw.style.color=col;
+    sw.onclick=()=>{ch.color=col;buildCharScreen();};
+    cr.appendChild(sw);
+  });
+
+  // Accessories
+  const ar=document.getElementById('acc-row');ar.innerHTML='';
+  ACCESSORIES.forEach(a=>{
+    const card=document.createElement('div');
+    card.className='acc-card'+(ch.acc===a.id?' active':'');
+    card.innerHTML=a.icon;
+    card.title=a.name;
+    card.onclick=()=>{ch.acc=a.id;buildCharScreen();};
+    ar.appendChild(card);
+  });
+
+  // Stat bars
+  const cls=CLASSES.find(c=>c.id===ch.cls)||CLASSES[0];
+  const sb=document.getElementById('stat-bars');sb.innerHTML='';
+  const statColors={atk:'#ef4444',def:'#60a5fa',spd:'#4ade80'};
+  const statLabels={atk:'ATK',def:'DEF',spd:'SPD'};
+  Object.entries(cls.stats).forEach(([k,v])=>{
+    const row=document.createElement('div');row.className='stat-bar-row';
+    row.innerHTML=`<span class="stat-bar-label">${statLabels[k]}</span><div class="stat-bar-track"><div class="stat-bar-fill" style="width:${v*10}%;background:${statColors[k]}"></div></div><span class="stat-bar-val">${v}/10</span>`;
+    sb.appendChild(row);
+  });
+}
+
+function renderCharPreview(){
+  const ch=state.char;
+  document.getElementById('char-preview').innerHTML=heroSVG(ch.color,ch.cls,ch.acc);
+  document.getElementById('char-name-display').textContent=ch.name||'Hero';
+}
+
+document.addEventListener('input',e=>{
+  if(e.target&&e.target.id==='char-name-input'){
+    state.char.name=e.target.value.trim()||'Hero';
+    document.getElementById('char-name-display').textContent=state.char.name;
+  }
+});
+
+function saveCharAndBack(){
+  state.char.name=document.getElementById('char-name-input').value.trim()||'Hero';
+  saveChar();
+  showScreen('s-title');
+}
+
+loadProgress();
+loadChar();
+
+// ════════════════════════════════════════════════════════════
+// SCREEN
+// ════════════════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+  if(id)document.getElementById(id).classList.add('show');
+}
+
+// ════════════════════════════════════════════════════════════
+// WORLD MAP
+// ════════════════════════════════════════════════════════════
+function buildWorldMap(){
+  const grid=document.getElementById('world-grid');
+  grid.innerHTML='';
+  Object.values(LANGS).forEach(lang=>{
+    const prog=state.progress[lang.id]||[];
+    const cleared=prog.filter(Boolean).length;
+    const total=lang.levels.length;
+    const card=document.createElement('div');
+    card.className='world-card';
+    card.innerHTML=`<span class="wc-icon">${lang.icon}</span>
+      <span class="wc-name" style="color:${lang.color}">${lang.name}</span>
+      <span class="wc-sub">${lang.desc}</span>
+      <div class="wc-stars">${lang.levels.map((_,j)=>`<span class="star${prog[j]?' lit':''}">${prog[j]?'★':'☆'}</span>`).join('')}</div>
+      <span class="wc-lvls">${cleared}/${total} cleared</span>`;
+    card.onclick=()=>{state.lang=lang.id;buildLevelMap(lang.id);showScreen('s-levelmap');};
+    grid.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// LEVEL MAP
+// ════════════════════════════════════════════════════════════
+function buildLevelMap(lid){
+  const lang=LANGS[lid];
+  const prog=state.progress[lid]||[];
+  document.getElementById('lm-title').textContent=`⚔ ${lang.name.toUpperCase()} REALM ⚔`;
+  document.getElementById('lm-sub').textContent=`${lang.desc} · ${prog.filter(Boolean).length}/${lang.levels.length} cleared`;
+  const path=document.getElementById('lvl-path');path.innerHTML='';
+  lang.levels.forEach((lvl,i)=>{
+    const cleared=prog[i];
+    const locked=i>0&&!prog[i-1];
+    const diffColors={EASY:'#4ade80',MEDIUM:'#fbbf24',HARD:'#f87171'};
+    const dc=diffColors[lvl.diff]||'#a07840';
+    const node=document.createElement('div');
+    node.className='lvl-node'+(locked?' locked':'')+(cleared?' completed':'')+(i===prog.filter(Boolean).length&&!locked?' current':'');
+    node.innerHTML=`<div class="lvl-num" style="color:${locked?'#3a2008':dc}">${i+1}</div>
+      <div class="lvl-info">
+        <div class="lvl-title">${lvl.title}</div>
+        <div class="lvl-enemy">vs ${ENEMY_NAMES[i]} · <span style="color:${dc}">${lvl.diff}</span> · ${lvl.xp} XP</div>
+        <div class="lvl-stars">${[0,1,2].map(()=>`<span style="font-size:9px;color:${cleared?'#f5c842':'#3a2008'}">${cleared?'★':'☆'}</span>`).join('')}</div>
+      </div>
+      <div style="font-size:clamp(18px,4vw,26px)">${locked?'🔒':cleared?'✅':ENEMY_SVGS[i]?'⚔':'▶'}</div>`;
+    if(!locked)node.onclick=()=>showModeSelect(lid,i);
+    path.appendChild(node);
+  });
+}
+
+function goLevelMap(){
+  document.getElementById('battle-layout').classList.remove('show');
+  buildLevelMap(state.lang);
+  showScreen('s-levelmap');
+}
+
+// ════════════════════════════════════════════════════════════
+// BATTLE
+// ════════════════════════════════════════════════════════════
+const DIFF_TIMER={EASY:180,MEDIUM:240,HARD:300};
+const DIFF_COLOR={EASY:'#4ade80',MEDIUM:'#fbbf24',HARD:'#f87171'};
+
+// ════════════════════════════════════════════════════════════
+// MODE SELECT (Multiple Choice vs Code Challenge)
+// ════════════════════════════════════════════════════════════
+let pendingLid=null,pendingLi=null;
+function showModeSelect(lid,li){
+  pendingLid=lid;pendingLi=li;
+  const lang=LANGS[lid];const lvl=lang.levels[li];
+  document.getElementById('mode-sub').textContent=`${lvl.title} · vs ${ENEMY_NAMES[li]}`;
+  document.getElementById('mode-select').classList.add('show');
+}
+function confirmMode(mode){
+  document.getElementById('mode-select').classList.remove('show');
+  startBattle(pendingLid,pendingLi,mode);
+}
+
+function startBattle(lid,li,mode){
+  mode=mode||'code';
+  state.mode=mode;
+  const lang=LANGS[lid];
+  const lvl=lang.levels[li];
+  state.lang=lid;state.levelIdx=li;
+  state.lives=3;state.score=0;state.streak=0;state.attempted=0;state.solved=0;state.totalXP=0;
+  // Sprites
+  document.getElementById('hero-frame').innerHTML=heroSVG(state.char.color,state.char.cls,state.char.acc);
+  document.getElementById('hero-label').textContent=(state.char.name||'HERO').toUpperCase();
+  document.getElementById('enemy-frame').innerHTML=ENEMY_SVGS[li]();
+  document.getElementById('enemy-label').textContent=ENEMY_NAMES[li].toUpperCase();
+  document.getElementById('bt-info').textContent=lang.name+' · '+lvl.title;
+  document.getElementById('et-lang').textContent=lang.name;
+  currentEnemyHP=ENEMY_HP[li];
+  // Problem
+  const dc=DIFF_COLOR[lvl.diff];
+  const qd=document.getElementById('ph-diff');qd.textContent=lvl.diff;qd.style.color=dc;qd.style.borderColor=dc;
+  document.getElementById('ph-lang').textContent=lang.short;
+  document.getElementById('ph-title').textContent=lvl.title;
+  document.getElementById('ph-xp').textContent='+'+lvl.xp+' XP';
+  document.getElementById('task-name').textContent='⚔ '+lvl.title;
+  document.getElementById('task-desc').innerHTML=lvl.task.replace(/\n/g,'<br>');
+  document.getElementById('task-example').textContent=lvl.example;
+  document.getElementById('task-hint').textContent='💡 '+lvl.hint;
+  document.getElementById('task-hint').classList.add('hidden');
+  // Constraints
+  document.getElementById('task-constraints').innerHTML=lvl.constraints.map(c=>`<div class="tc-item"><span></span><span>${c}</span></div>`).join('');
+  // Editor
+  document.getElementById('code-editor').value=lvl.starter;
+  document.getElementById('output-scroll').innerHTML='<span style="color:#3a2008">Write your solution above, then click ▶ Run & Test</span>';
+  document.getElementById('output-status').textContent='';
+  // HP
+  updateEnemyHP(ENEMY_HP[li],ENEMY_HP[li],li);
+  updateHUD();renderHearts();
+
+  const editorPane=document.getElementById('editor-pane');
+  const mcqPane=document.getElementById('mcq-pane');
+  const taskPane=document.getElementById('task-pane');
+  const hintBtn=document.getElementById('hint-btn');
+
+  if(mode==='mcq'){
+    editorPane.style.display='none';
+    mcqPane.style.display='flex';
+    mcqPane.style.flexDirection='column';
+    taskPane.style.display='none';
+    hintBtn.style.display='none';
+    document.getElementById('ph-xp').textContent='+'+Math.round(lvl.xp*0.6)+' XP';
+    state.mcq={qIdx:0,correct:0,total:(MCQ_DATA[lid]&&MCQ_DATA[lid][li])?MCQ_DATA[lid][li].length:0};
+    startTimer(60);
+    showMcqQuestion();
+  } else {
+    editorPane.style.display='flex';
+    mcqPane.style.display='none';
+    taskPane.style.display='block';
+    hintBtn.style.display='inline-block';
+    startTimer(DIFF_TIMER[lvl.diff]);
+  }
+
+  showScreen(null);
+  document.getElementById('battle-layout').classList.add('show');
+}
+
+// ════════════════════════════════════════════════════════════
+// MULTIPLE CHOICE FLOW
+// ════════════════════════════════════════════════════════════
+function showMcqQuestion(){
+  const lang=LANGS[state.lang];const lvl=lang.levels[state.levelIdx];
+  const set=(MCQ_DATA[state.lang]&&MCQ_DATA[state.lang][state.levelIdx])||[];
+  const q=set[state.mcq.qIdx];
+  if(!q){mcqFinish();return;}
+  document.getElementById('mcq-progress').textContent=`Question ${state.mcq.qIdx+1}/${state.mcq.total}`;
+  document.getElementById('mcq-question').textContent=q.q;
+  const og=document.getElementById('mcq-options');og.innerHTML='';
+  const letters=['A','B','C','D'];
+  q.o.forEach((opt,i)=>{
+    const b=document.createElement('button');b.className='mcq-opt';
+    b.innerHTML=`<span class="mcq-letter">${letters[i]}.</span><span>${opt}</span>`;
+    b.onclick=()=>mcqAnswer(i,q,b);
+    og.appendChild(b);
+  });
+  document.getElementById('mcq-explain').style.display='none';
+  document.getElementById('mcq-next-btn').style.display='none';
+}
+
+function mcqAnswer(i,q,btn){
+  document.querySelectorAll('.mcq-opt').forEach(b=>b.disabled=true);
+  const correct=i===q.a;
+  const opts=document.querySelectorAll('.mcq-opt');
+  opts[q.a].classList.add('correct');
+  if(!correct)btn.classList.add('wrong');
+  const ex=document.getElementById('mcq-explain');
+  ex.style.display='block';
+  ex.style.background=correct?'rgba(5,30,12,.9)':'rgba(30,5,5,.9)';
+  ex.style.borderColor=correct?'#166534':'#7f1d1d';
+  ex.style.color=correct?'#86efac':'#fca5a5';
+  ex.textContent=(correct?'✅ Correct! — ':'❌ Wrong! — ')+q.e;
+  document.getElementById('mcq-next-btn').style.display='inline-block';
+
+  const lvl=LANGS[state.lang].levels[state.levelIdx];
+  const dmg=Math.round((ENEMY_HP[state.levelIdx]/state.mcq.total));
+  if(correct){
+    state.mcq.correct++;
+    state.streak++;if(state.streak>state.bestStreak)state.bestStreak=state.streak;
+    state.score+=40;state.solved++;
+    currentEnemyHP=Math.max(0,currentEnemyHP-dmg);
+    updateEnemyHP(currentEnemyHP,ENEMY_HP[state.levelIdx],state.levelIdx);
+    flashFx('rgba(74,222,128,.08)');
+    spawnFloat(`-${dmg} HP`,DIFF_COLOR[lvl.diff],Math.round(window.innerWidth*.7),Math.round(window.innerHeight*.3));
+    if(state.streak>=3)showCombo(state.streak);
+    const ef=document.getElementById('enemy-frame');
+    ef.style.transition='transform .12s';ef.style.transform='scale(0.92)';
+    setTimeout(()=>ef.style.transform='scale(1)',120);
+  } else {
+    state.streak=0;state.lives--;state.attempted++;
+    updateHUD();renderHearts();
+    flashFx('rgba(239,68,68,.1)');
+    const pf=document.getElementById('hero-frame');
+    pf.style.transition='transform .06s';
+    ['translateX(-8px)','translateX(8px)','translateX(0)'].forEach((t,idx)=>setTimeout(()=>pf.style.transform=t,idx*60));
+  }
+  state.attempted++;
+  updateHUD();
+}
+
+function mcqNext(){
+  state.mcq.qIdx++;
+  if(currentEnemyHP<=0){mcqFinish(true);return;}
+  if(state.lives<=0){mcqFinish(false);return;}
+  if(state.mcq.qIdx>=state.mcq.total){mcqFinish(currentEnemyHP<=0);return;}
+  showMcqQuestion();
+}
+
+function mcqFinish(won){
+  clearInterval(state.timerInterval);
+  const lvl=LANGS[state.lang].levels[state.levelIdx];
+  if(won===undefined)won=currentEnemyHP<=0;
+  if(won){
+    saveProgress(state.lang,state.levelIdx,true);
+    const xp=Math.round(lvl.xp*0.6);
+    state.totalXP+=xp;
+    flashFx('rgba(74,222,128,.1)');
+    setTimeout(()=>showOutcome(true,lvl,xp,state.score),400);
+  } else {
+    setTimeout(()=>showOutcome(false),400);
+  }
+}
+
+function updateEnemyHP(cur,max,idx){
+  const pct=Math.max(0,cur/max*100);
+  const ef=document.getElementById('ehp-fill');
+  ef.style.width=pct+'%';
+  ef.style.background=pct>60?`linear-gradient(90deg,#15803d,${ENEMY_COLORS[idx||0]})`
+    :pct>25?`linear-gradient(90deg,#a16207,#fbbf24)`
+    :`linear-gradient(90deg,#991b1b,#ef4444)`;
+  document.getElementById('ehp-text').textContent=Math.round(cur)+'/'+max;
+}
+
+function updateHUD(){
+  document.getElementById('bt-score').textContent=state.score;
+  document.getElementById('bt-lives').textContent='❤'.repeat(state.lives)+'♡'.repeat(3-state.lives);
+  document.getElementById('bt-streak').textContent=state.streak;
+}
+
+function renderHearts(){
+  const c=document.getElementById('hero-hearts');c.innerHTML='';
+  for(let i=0;i<3;i++){const h=document.createElement('span');h.className='hh '+(i<state.lives?'full':'empty');h.textContent=i<state.lives?'♥':'♡';c.appendChild(h);}
+}
+
+// TIMER
+function startTimer(sec){
+  clearInterval(state.timerInterval);
+  state.timeLeft=sec;tickTimer();
+  state.timerInterval=setInterval(()=>{state.timeLeft--;tickTimer();if(state.timeLeft<=0){clearInterval(state.timerInterval);timeUp();}},1000);
+}
+function tickTimer(){
+  const m=Math.floor(state.timeLeft/60),s=state.timeLeft%60;
+  const el=document.getElementById('ph-timer');
+  el.textContent=m+':'+(s<10?'0':'')+s;
+  el.style.color=state.timeLeft<30?'#ef4444':state.timeLeft<60?'#fbbf24':'#f5c842';
+}
+function timeUp(){
+  state.lives--;state.streak=0;updateHUD();renderHearts();
+  flashFx('rgba(239,68,68,.14)');
+  if(state.mode==='mcq'){
+    if(state.lives<=0){setTimeout(()=>showOutcome(false),600);}
+    else{mcqFinish(false);}
+    return;
+  }
+  addOut('⏰ Time\'s up! -1 life','err');
+  if(state.lives<=0){setTimeout(()=>showOutcome(false),800);}
+  else{const lang=LANGS[state.lang];startTimer(DIFF_TIMER[lang.levels[state.levelIdx].diff]);}
+}
+
+function showHint(){
+  const h=document.getElementById('task-hint');
+  const was=h.classList.contains('hidden');
+  h.classList.toggle('hidden');
+  if(was){state.score=Math.max(0,state.score-10);addOut('💡 Hint revealed (-10 pts)','err');}
+}
+function resetCode(){
+  document.getElementById('code-editor').value=LANGS[state.lang].levels[state.levelIdx].starter;
+  document.getElementById('output-scroll').innerHTML='<span style="color:#3a2008">Code reset.</span>';
+  document.getElementById('output-status').textContent='';
+}
+
+// ════════════════════════════════════════════════════════════
+// CODE RUNNER
+// ════════════════════════════════════════════════════════════
+function addOut(txt,type){
+  const out=document.getElementById('output-scroll');
+  const row=document.createElement('div');row.className='test-row';
+  const icon=type==='pass'?'✅':type==='fail'?'❌':type==='err'?'⚠️':'ℹ️';
+  row.innerHTML=`<span class="test-icon">${icon}</span><span class="test-text ${type}">${escHTML(txt)}</span>`;
+  out.appendChild(row);out.scrollTop=out.scrollHeight;
+}
+function escHTML(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function clearOut(){document.getElementById('output-scroll').innerHTML='';}
+
+function runCode(){
+  const lang=LANGS[state.lang];const lvl=lang.levels[state.levelIdx];
+  const code=document.getElementById('code-editor').value.trim();
+  clearOut();
+  if(!code||code===lvl.starter.trim()){addOut('Write your solution first!','err');return;}
+  addOut('Running '+lvl.tests.length+' test case'+(lvl.tests.length>1?'s':'')+'…','');
+  if(lvl.fn==='__output__'){addOut('Mode: Print Output — your console.log/print/cout/echo output is checked','');}
+  const st=document.getElementById('output-status');
+  st.textContent='TESTING…';st.style.color='#fbbf24';
+  setTimeout(()=>{
+    try{
+      const jsCode=transpile(code,lvl.lang);
+      const results=lvl.tests.map(t=>{
+        try{
+          let got=sandbox(jsCode,lvl.fn,t.i,lvl.lang);
+          let exp=t.e;
+          if(lvl.fn==='__output__'&&typeof got==='string'){
+            got=got.trim();
+            if(typeof exp==='string')exp=exp.trim();
+            // For Hello World tests: check first line exactly, second line just needs "My name is"
+            if(exp.includes('Hello, World!')){
+              const gotLines=got.split('\n').map(l=>l.trim());
+              const expLines=exp.split('\n').map(l=>l.trim());
+              const line1ok=gotLines[0]==='Hello, World!';
+              const line2ok=gotLines[1]&&gotLines[1].startsWith('My name is ');
+              const passed=line1ok&&line2ok;
+              return{desc:t.d,expected:exp,got,passed};
+            }
+          }
+          const passed=deepEq(got,exp);
+          return{desc:t.d,expected:exp,got,passed};
+        }catch(e){return{desc:t.d,expected:t.e,got:null,passed:false,error:e.message.slice(0,100)};}
+      });
+      const ok=results.filter(r=>r.passed).length;
+      results.forEach(r=>{
+        if(r.error)addOut(`${r.desc} → ERROR: ${r.error}`,'err');
+        else{
+          const expStr=typeof r.expected==='string'&&r.expected.includes('\n')
+            ?`\n  expected:\n${r.expected.split('\n').map(l=>'    '+l).join('\n')}\n  got:\n${String(r.got||'').split('\n').map(l=>'    '+l).join('\n')}`
+            :`expected ${JSON.stringify(r.expected)}, got ${JSON.stringify(r.got)}`;
+          addOut(`${r.desc} → ${expStr} ${r.passed?'✓':'✗'}`,r.passed?'pass':'fail');
+        }
+      });
+      if(ok===results.length){
+        st.textContent='✅ ALL '+ok+'/'+results.length+' PASSED';st.style.color='#4ade80';
+        onSuccess(lvl,ok);
+      }else{
+        st.textContent='❌ '+ok+'/'+results.length+' PASSED';st.style.color='#f87171';
+        onFail();
+      }
+    }catch(e){
+      addOut('Runtime Error: '+e.message,'err');
+      st.textContent='❌ ERROR';st.style.color='#f87171';
+      onFail();
+    }
+  },150);
+}
+
+// ─── TRANSPILER ──────────────────────────────────────
+function transpile(code,lang){
+  if(lang==='js')return code;
+  if(lang==='py')return pyToJS(code);
+  if(lang==='php')return phpToJS(code);
+  if(lang==='java')return javaToJS(code);
+  if(lang==='cs')return csToJS(code);
+  if(lang==='cpp')return cppToJS(code);
+  return code;
+}
+
+function pyToJS(c){
+  c=c.replace(/^def\s+(\w+)\s*\(([^)]*)\)\s*:/gm,'function $1($2) {');
+  c=c.replace(/\bNone\b/g,'null').replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false');
+  c=c.replace(/\belif\s+(.+?):/g,'else if ($1) {');
+  c=c.replace(/\bif\s+(.+?):/g,'if ($1) {');
+  c=c.replace(/\belse\s*:/g,'else {');
+  c=c.replace(/\bfor\s+(\w+)\s+in\s+range\((\d+)\)\s*:/g,'for (let $1=0;$1<$2;$1++) {');
+  c=c.replace(/\bfor\s+(\w+)\s+in\s+range\((\w+)\)\s*:/g,'for (let $1=0;$1<$2;$1++) {');
+  c=c.replace(/\bfor\s+(\w+)\s+in\s+(.+?)\s*:/g,'for (let $1 of $2) {');
+  c=c.replace(/\bwhile\s+(.+?):/g,'while ($1) {');
+  c=c.replace(/\[(.+?)\s+for\s+(\w+)\s+in\s+(.+?)\s+if\s+(.+?)\]/g,'($3).filter($2=>($4)).map($2=>($1))');
+  c=c.replace(/\[(.+?)\s+for\s+(\w+)\s+in\s+(.+?)\]/g,'($3).map($2=>($1))');
+  c=c.replace(/\bprint\(/g,'console.log(');
+  c=c.replace(/\blen\((\w+)\)/g,'($1).length');
+  c=c.replace(/\.append\(/g,'.push(');
+  c=c.replace(/\.lower\(\)/g,'.toLowerCase()');
+  c=c.replace(/\.upper\(\)/g,'.toUpperCase()');
+  c=c.replace(/\.split\(\)/g,".split(' ')");
+  c=c.replace(/sorted\((.+?)\)/g,'[...$1].sort()');
+  c=c.replace(/f"([^"]*)"/g,'`$1`').replace(/f'([^']*)'/g,'`$1`');
+  c=c.replace(/#[^\n]*/g,'//comment');
+  c=c.replace(/\bpass\b/g,'');
+  c=c.replace(/^\s*return\s+(.+)$/gm,'  return $1;');
+  return closeBraces(c);
+}
+
+function phpToJS(c){
+  c=c.replace(/function\s+(\w+)\s*\(([^)]*)\)/g,(m,n,p)=>`function ${n}(${p.replace(/\$(\w+)/g,'$1').replace(/,\s*/g,', ')})`);
+  c=c.replace(/\$(\w+)/g,'$1');
+  c=c.replace(/\barray\(\)/g,'[]');
+  c=c.replace(/\becho\s+(.+?);/g,'console.log($1);');
+  c=c.replace(/PHP_EOL/g,'"\\n"');
+  // PHP_EOL and \n in strings: keep as-is since JS handles them
+  // PHP string concat `.` -> JS `+` (only between quotes/vars, simple heuristic)
+  c=c.replace(/(["'\)\w\]])\s*\.\s*(["'\$\w])/g,'$1 + $2');
+  c=c.replace(/filter_var\s*\(\s*(\w+)\s*,\s*FILTER_VALIDATE_EMAIL\s*\)/g,'/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test($1)');
+  c=c.replace(/strtolower\(([^)]+)\)/g,'($1).toLowerCase()');
+  c=c.replace(/strtoupper\(([^)]+)\)/g,'($1).toUpperCase()');
+  c=c.replace(/strlen\(([^)]+)\)/g,'($1).length');
+  c=c.replace(/count\(([^)]+)\)/g,'($1).length');
+  c=c.replace(/array_unique\(([^)]+)\)/g,'[...new Set($1)]');
+  c=c.replace(/rsort\((\w+)\)/g,'$1.sort((a,b)=>b-a)');
+  c=c.replace(/sort\((\w+)\)/g,'$1.sort((a,b)=>a-b)');
+  c=c.replace(/array_reverse\(([^)]+)\)/g,'[...$1].reverse()');
+  c=c.replace(/explode\s*\(\s*"([^"]*)"\s*,\s*(\w+)\s*\)/g,'$2.split("$1")');
+  c=c.replace(/explode\s*\(\s*'([^']*)'\s*,\s*(\w+)\s*\)/g,'$2.split("$1")');
+  c=c.replace(/implode\s*\(\s*"([^"]*)"\s*,\s*(\w+)\s*\)/g,'$2.join("$1")');
+  c=c.replace(/implode\s*\(\s*'([^']*)'\s*,\s*(\w+)\s*\)/g,'$2.join("$1")');
+  c=c.replace(/is_array\(([^)]+)\)/g,'Array.isArray($1)');
+  c=c.replace(/\bforeach\s*\(\s*(\w+)\s+as\s+(\w+)\s*=>\s*(\w+)\s*\)/g,'for (let [$2,$3] of Object.entries($1))');
+  c=c.replace(/\bforeach\s*\(\s*(\w+)\s+as\s+(\w+)\s*\)/g,'for (let $2 of $1)');
+  c=c.replace(/\bnull\b/g,'null').replace(/\btrue\b/g,'true').replace(/\bfalse\b/g,'false');
+  c=c.replace(/\/\/[^\n]*/g,'');
+  return c;
+}
+
+function javaToJS(c){
+  c=c.replace(/^import\s+.+;?\s*$/gm,'');
+  c=c.replace(/System\.out\.println\(([^;]*)\)/g,'console.log($1)');
+  c=c.replace(/System\.out\.print\(([^;]*)\)/g,'console.log($1)');
+  c=c.replace(/public\s+static\s+void\s+main\s*\([^)]*\)\s*\{/g,'(function(){');
+  c=c.replace(/\b(?:int|boolean|String|char|double|float|long|void|char)\[\]\s+(\w+)\s*\(([^)]*)\)\s*\{/g,(m,n,p)=>{
+    const jp=p.replace(/\b(?:int|boolean|String|char|double|float|long|char)\[\]?\s+(\w+)/g,'$1').trim();
+    return `function ${n}(${jp}) {`;
+  });
+  c=c.replace(/\b(?:int|boolean|String|char|double|float|long)\[\]?\s+/g,'let ');
+  c=c.replace(/new ArrayList<[^>]*>\(\)/g,'[]');
+  c=c.replace(/\.add\(/g,'.push(');
+  c=c.replace(/\.size\(\)/g,'.length');
+  c=c.replace(/\.get\((\w+)\)/g,'[$1]');
+  c=c.replace(/new HashMap<[^>]*>\(\)/g,'{}');
+  c=c.replace(/\.put\(([^,]+),\s*([^)]+)\)/g,'[$1]=$2');
+  c=c.replace(/\.getOrDefault\(([^,]+),\s*([^)]+)\)/g,'[$1]??$2');
+  c=c.replace(/\.containsKey\(([^)]+)\)/g,'[$1]!==undefined');
+  c=c.replace(/new Stack<[^>]*>\(\)/g,'[]');
+  c=c.replace(/\.isEmpty\(\)/g,'.length===0');
+  c=c.replace(/new HashSet<[^>]*>\(\)/g,'new Set()');
+  c=c.replace(/\.contains\(([^)]+)\)/g,'.has($1)');
+  c=c.replace(/\.remove\(([^)]+)\)/g,'.delete($1)');
+  c=c.replace(/\.toLowerCase\(\)/g,'.toLowerCase()');
+  c=c.replace(/\.toUpperCase\(\)/g,'.toUpperCase()');
+  c=c.replace(/\.length\(\)/g,'.length');
+  c=c.replace(/\.charAt\((\w+)\)/g,'[$1]');
+  c=c.replace(/\.equals\(([^)]+)\)/g,'===$1');
+  c=c.replace(/Arrays\.sort\(([^)]+)\)/g,'$1.sort((a,b)=>a-b)');
+  c=c.replace(/for\s*\(\s*int\s+/g,'for (let ');
+  c=c.replace(/\bnull\b/g,'null').replace(/\btrue\b/g,'true').replace(/\bfalse\b/g,'false');
+  c=c.replace(/\/\/[^\n]*/g,'');
+  return closeBraces(c);
+}
+
+function csToJS(c){
+  c=c.replace(/Console\.WriteLine\(([^;]*)\)/g,'console.log($1)');
+  c=c.replace(/Console\.Write\(([^;]*)\)/g,'console.log($1)');
+  c=c.replace(/static\s+void\s+Main\s*\([^)]*\)\s*\{/g,'(function(){');
+  c=javaToJS(c);
+  c=c.replace(/\.ToLower\(\)/g,'.toLowerCase()');
+  c=c.replace(/\.ToUpper\(\)/g,'.toUpperCase()');
+  c=c.replace(/\.Length\b/g,'.length');
+  c=c.replace(/\.Split\(' '\)/g,".split(' ')");
+  c=c.replace(/\.Split\(new char\[\][^)]+\)/g,".split(' ')");
+  c=c.replace(/char\.IsLetterOrDigit\(([^)]+)\)/g,'/[a-zA-Z0-9]/.test($1)');
+  c=c.replace(/String\.IsNullOrEmpty\(([^)]+)\)/g,'!($1)');
+  c=c.replace(/\.Reverse\(\)\.ToArray\(\)/g,'.reverse()');
+  c=c.replace(/\.ToArray\(\)/g,'');
+  c=c.replace(/\.Distinct\(\)/g,'.filter((v,i,a)=>a.indexOf(v)===i)');
+  c=c.replace(/new List<[^>]*>\(\)/g,'[]');
+  c=c.replace(/\.Add\(/g,'.push(');
+  c=c.replace(/\.Count\b/g,'.length');
+  c=c.replace(/new HashSet<[^>]*>\(\)/g,'new Set()');
+  c=c.replace(/new Dictionary<[^>]*>\(\)/g,'{}');
+  c=c.replace(/\bvar\s+/g,'let ');
+  c=c.replace(/\bbool\s+/g,'let ');
+  c=c.replace(/\bstring\s+/g,'let ');
+  c=c.replace(/\bint\s+/g,'let ');
+  c=c.replace(/(?:int|bool|string|char|double)\[\]?\s+(\w+)\s*,/g,'$1,');
+  c=c.replace(/(?:int|bool|string|char|double)\[\]?\s+(\w+)\s*\)/g,'$1)');
+  return closeBraces(c);
+}
+
+function cppToJS(c){
+  c=c.replace(/^#include.+$/gm,'');
+  c=c.replace(/\busing namespace std;?/g,'');
+  // cout << "x" << endl / "\n" -> console.log("x")
+  c=c.replace(/cout\s*<<\s*((?:(?!<<\s*(?:endl|"\\n"|'\n')).)+?)(?:\s*<<\s*(?:endl|"\\n"|'\\n'))?\s*;/g,'console.log($1);');
+  // cout << a << " " << b etc — chain into template
+  c=c.replace(/cout\s*((?:<<\s*(?:[^;]+?))+)\s*;/g,(m,chain)=>{
+    const parts=chain.split('<<').map(s=>s.trim()).filter(s=>s&&s!=='endl'&&s!=='"\\n"'&&s!=="'\\n'");
+    return 'console.log('+parts.join('+') + ');';
+  });
+  c=c.replace(/int\s+main\s*\([^)]*\)\s*\{/g,'(function(){');
+  c=c.replace(/\b(?:int|bool|double|float|void)\s+(\w+)\s*\(([^)]*)\)\s*\{/g,(m,n,p)=>{
+    const jp=p.replace(/\b(?:int|bool|double|string|char|vector<\w+>|unordered_\w+<[^>]*>)\s+/g,'').trim();
+    return `function ${n}(${jp}) {`;
+  });
+  c=c.replace(/\bvector<\w+>\s+(\w+)/g,'let $1');
+  c=c.replace(/\.push_back\(/g,'.push(');
+  c=c.replace(/\.size\(\)/g,'.length');
+  c=c.replace(/\.empty\(\)/g,'.length===0');
+  c=c.replace(/unordered_set<\w+>\s+(\w+)/g,'let $1=new Set()');
+  c=c.replace(/unordered_map<[^>]+>\s+(\w+)/g,'let $1={}');
+  c=c.replace(/(\w+)\.insert\(/g,'$1.add(');
+  c=c.replace(/(\w+)\.count\(([^)]+)\)/g,'($1.has($2)?1:0)');
+  c=c.replace(/(\w+)\.find\(([^)]+)\)\s*!=\s*\w+\.end\(\)/g,'$1.has($2)');
+  c=c.replace(/\bsqrt\(/g,'Math.sqrt(');
+  c=c.replace(/\bmax\(/g,'Math.max(');
+  c=c.replace(/\bmin\(/g,'Math.min(');
+  c=c.replace(/\babs\(/g,'Math.abs(');
+  c=c.replace(/for\s*\(\s*(?:auto|int)\s+(\w+)\s*:\s*(\w+)\s*\)/g,'for (let $1 of $2)');
+  c=c.replace(/for\s*\(\s*int\s+/g,'for (let ');
+  c=c.replace(/\b(?:int|bool|double|auto)\s+(\w+)\s*=/g,'let $1 =');
+  c=c.replace(/\btrue\b/g,'true').replace(/\bfalse\b/g,'false').replace(/\bnull\b/g,'null');
+  c=c.replace(/\/\/[^\n]*/g,'');
+  return closeBraces(c);
+}
+
+function closeBraces(code){
+  const lines=code.split('\n');
+  let d=0;const out=[];
+  for(const l of lines){d+=(l.match(/\{/g)||[]).length-(l.match(/\}/g)||[]).length;out.push(l);}
+  while(d>0){out.push('}');d--;}
+  // If code contains a self-invoking main wrapper, close it
+  if(code.includes('(function(){')){const s=out.join('\n');if(!s.includes('})()'))out.push('})();');}
+  return out.join('\n');
+}
+
+function sandbox(code,fn,inputs,lang){
+  if(fn==='__output__'){
+    const logs=[];
+    const fakeLog=(...args)=>{
+      const line=args.map(a=>(a===null?'null':a===undefined?'undefined':typeof a==='object'?JSON.stringify(a):String(a))).join(' ');
+      // Split on newlines so echo "a\nb" counts as two lines
+      const parts=line.split(/\\n|\n/);
+      parts.forEach((p,i)=>{if(i<parts.length-1||p!=='')logs.push(p);});
+    };
+    const body=code;
+    try{(new Function('console',body))({log:fakeLog,warn:fakeLog,error:fakeLog});}catch(e){throw e;}
+    return logs.join('\n');
+  }
+  const body=`${code}\nreturn ${fn}(${inputs.map(i=>JSON.stringify(i)).join(',')});`;
+  return (new Function(body))();
+}
+
+function deepEq(a,b){
+  if(a===b)return true;
+  if(a===null||b===null)return a===b;
+  if(typeof a==='number'&&typeof b==='number')return Math.abs(a-b)<1e-9;
+  if(Array.isArray(a)&&Array.isArray(b)){
+    if(a.length!==b.length)return false;
+    return a.every((v,i)=>deepEq(v,b[i]));
+  }
+  if(typeof a==='object'&&typeof b==='object'){
+    const ka=Object.keys(a).sort(),kb=Object.keys(b).sort();
+    if(ka.length!==kb.length)return false;
+    return ka.every((k,i)=>k===kb[i]&&deepEq(a[k],b[k]));
+  }
+  if(typeof a==='string'&&typeof b==='number')return Number(a)===b;
+  if(typeof a==='number'&&typeof b==='string')return a===Number(b);
+  return false;
+}
+
+// ════════════════════════════════════════════════════════════
+// SUCCESS / FAILURE
+// ════════════════════════════════════════════════════════════
+let currentEnemyHP=0;
+
+function onSuccess(lvl,testsPassed){
+  clearInterval(state.timerInterval);
+  state.streak++;
+  if(state.streak>state.bestStreak)state.bestStreak=state.streak;
+  const bonus=state.streak>=3?1.5:1;
+  const xp=Math.round(lvl.xp*bonus);
+  const pts=Math.round(120*bonus+state.timeLeft*0.4);
+  state.score+=pts;state.totalXP+=xp;state.solved++;state.attempted++;
+  updateHUD();saveProgress(state.lang,state.levelIdx,true);
+  // Enemy defeat animation
+  const ef=document.getElementById('enemy-frame');
+  ef.style.transition='transform .3s,filter .3s,opacity .4s';
+  ef.style.filter='brightness(5) saturate(0)';
+  ef.style.transform='scale(1.3) rotate(12deg)';
+  setTimeout(()=>{ef.style.opacity='0';ef.style.transform='scale(0.1) translateY(50px)';},300);
+  flashFx('rgba(74,222,128,.1)');
+  spawnFloat(`+${xp} XP`,'#f5c842',Math.round(window.innerWidth*.7),Math.round(window.innerHeight*.3));
+  spawnFloat(`+${pts} pts`,'#4ade80',Math.round(window.innerWidth*.22),Math.round(window.innerHeight*.38));
+  if(state.streak>=3)showCombo(state.streak);
+  setTimeout(()=>showOutcome(true,lvl,xp,pts),900);
+}
+
+function onFail(){
+  state.streak=0;state.attempted++;state.lives--;
+  updateHUD();renderHearts();
+  flashFx('rgba(239,68,68,.1)');
+  // Player hurt
+  const pf=document.getElementById('hero-frame');
+  pf.style.transition='transform .06s';
+  ['translateX(-10px)','translateX(10px)','translateX(-6px)','translateX(0)'].forEach((t,i)=>setTimeout(()=>pf.style.transform=t,i*60));
+  setTimeout(()=>pf.style.transition='',250);
+  if(state.lives<=0){clearInterval(state.timerInterval);setTimeout(()=>showOutcome(false),600);}
+}
+
+function flashFx(col){
+  const f=document.getElementById('flash');
+  f.style.background=col;f.style.animation='none';f.offsetHeight;f.style.animation='flashFx .4s ease-out forwards';
+}
+
+function spawnFloat(txt,col,x,y){
+  const el=document.createElement('div');el.className='dmg-float';el.textContent=txt;
+  el.style.cssText=`color:${col};left:${x}px;top:${y}px;font-size:clamp(16px,3.5vw,26px);text-shadow:0 0 14px ${col},2px 2px 0 rgba(0,0,0,.8)`;
+  document.body.appendChild(el);setTimeout(()=>el.remove(),1450);
+}
+
+function showCombo(n){
+  const b=document.getElementById('combo-banner');b.style.display='block';
+  const lang=LANGS[state.lang];
+  b.innerHTML=`<div class="combo-txt" style="color:${lang?.color||'#f5c842'}">⚔ ${n}× STREAK! ⚔</div>`;
+  setTimeout(()=>{b.style.display='none';b.innerHTML='';},1350);
+}
+
+// ════════════════════════════════════════════════════════════
+// OUTCOME OVERLAY
+// ════════════════════════════════════════════════════════════
+function showOutcome(won,lvl,xp,pts){
+  const ov=document.getElementById('outcome-overlay');
+  const lang=LANGS[state.lang];
+  const ni=state.levelIdx+1;
+  const hasNext=ni<lang.levels.length;
+  ov.innerHTML=`<div class="outcome-box scroll-panel">
+    <span class="oc-icon">${won?'🏆':'💀'}</span>
+    <div class="oc-title" style="color:${won?'#f5c842':'#ef4444'}">${won?'Level Cleared!':'Defeated!'}</div>
+    <div class="oc-sub">${won?(lvl?.title||'Well done!'):'The monster was too strong...'}</div>
+    ${won?`<div class="oc-xp">+${xp||0} XP  ·  +${pts||0} pts${state.streak>=3?' · 🔥 Streak Bonus!':''}</div>`:''}
+    <div class="oc-btns">
+      ${won&&hasNext?`<button class="btn btn-gold" onclick="closeAnd('next')">Next Level ⚔</button>`:''}
+      ${won?`<button class="btn btn-dim" onclick="closeAnd('map')">Level Map</button>`:`<button class="btn btn-gold" onclick="closeAnd('retry')">↺ Try Again</button>`}
+      ${!won?`<button class="btn btn-dim" onclick="closeAnd('map')">Level Map</button>`:''}
+    </div>
+  </div>`;
+  ov.classList.add('show');
+}
+
+function closeAnd(action){
+  document.getElementById('outcome-overlay').classList.remove('show');
+  const ef=document.getElementById('enemy-frame');
+  ef.style.transition='';ef.style.filter='';ef.style.transform='';ef.style.opacity='';
+  if(action==='next'){setTimeout(()=>startBattle(state.lang,state.levelIdx+1,state.mode),80);}
+  else if(action==='retry'){setTimeout(()=>startBattle(state.lang,state.levelIdx,state.mode),80);}
+  else{document.getElementById('battle-layout').classList.remove('show');buildLevelMap(state.lang);showScreen('s-levelmap');}
+}
+
+// ════════════════════════════════════════════════════════════
+// RESULTS
+// ════════════════════════════════════════════════════════════
+function showResults(){
+  const acc=state.attempted>0?Math.round(state.solved/state.attempted*100):0;
+  const g=acc>=90?'S':acc>=75?'A':acc>=60?'B':acc>=45?'C':'D';
+  const gc={S:'#f5c842',A:'#4ade80',B:'#60a5fa',C:'#fb923c',D:'#f87171'}[g];
+  const lang=LANGS[state.lang||'javascript'];
+  document.getElementById('r-gl').textContent=g;
+  const rs=document.getElementById('r-seal');rs.style.color=gc;rs.style.boxShadow=`0 0 24px ${gc}60`;
+  document.getElementById('r-sc').textContent=state.score;
+  document.getElementById('r-ch').textContent=state.solved+'/'+state.attempted;
+  document.getElementById('r-st').textContent=state.bestStreak;
+  document.getElementById('r-xp').textContent=state.totalXP;
+  document.getElementById('r-title').textContent=state.solved>0?'Heroic Run!':'Better Luck Next Time';
+  document.getElementById('r-sub').textContent=state.solved>0?'The realm remembers thy deeds':'Train harder, adventurer';
+  const msgs={S:`Flawless ${lang.name} mastery! Thou art a true Code Wizard.`,A:`Excellent ${lang.name} command! The realm salutes thee.`,B:`Good ${lang.name} knowledge. Keep studying the scrolls.`,C:`Practice more ${lang.name}, young apprentice.`,D:`Every ${lang.name} wizard starts here. Do not despair!`};
+  document.getElementById('r-fb').textContent=msgs[g];
+  document.getElementById('btn-again').onclick=()=>{showScreen(null);startBattle(state.lang,state.levelIdx,state.mode);};
+  document.getElementById('battle-layout').classList.remove('show');
+  showScreen('s-results');
+}
+
+// ════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUT: Ctrl+Enter to run
+// ════════════════════════════════════════════════════════════
+document.getElementById('code-editor').addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();runCode();}
+  // Tab inserts spaces
+  if(e.key==='Tab'){
+    e.preventDefault();
+    const el=e.target;const s=el.selectionStart,en=el.selectionEnd;
+    el.value=el.value.substring(0,s)+'  '+el.value.substring(en);
+    el.selectionStart=el.selectionEnd=s+2;
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+buildWorldMap();
+</script>
+</body>
+</html>
